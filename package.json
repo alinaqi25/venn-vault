@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "name": "venn-vault",
+  "description": "Venn-Vault is a full-stack online banking application with a heavy emphasis on core backend mechanics. Deliberately built without Express.js, this project was designed from the ground up to deeply explore routing, server architecture, and security layers using pure, vanilla Node.js rather than relying on framework magic.",
+  "version": "1.0.0",
+  "main": "backend/server.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "node --watch --env-file=backend/.env backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alinaqi25/venn-vault.git"
+  },
+  "author": "alinaqi25",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alinaqi25/venn-vault/issues"
+  },
+  "homepage": "https://github.com/alinaqi25/venn-vault#readme"
+}
