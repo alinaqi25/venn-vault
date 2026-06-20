@@ -1,4 +1,4 @@
-import http from 'http'
+import http, { request } from 'http'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
@@ -33,6 +33,18 @@ async function parseRequestBody(request){
 
 function sendResponse(response, statusCode, payload){
     response.writeHead(statusCode, {
-        
+        "Content-Type":'application/json',
+        "Access-Control-Allowed-Origin": ALLOWED_ORIGIN, // ft
+        "Access-Control-Allowed-Headers":'Content-Type',
+        "Access-Control-Allowed-Methods":'GET, POST, OPTIONS',
+        "Access-Control-Allowed-Credentials":'true'
     })
+    response.end(JSON.stringify(payload))
 }
+
+const server = http.createServer(async (request,response)=>{
+    response.setHeader('Content-Type', 'application/json')
+    const url = request.url
+    const method = request.method
+    
+})
