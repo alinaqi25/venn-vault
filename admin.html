@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Venn-Vault</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <a href="index.html" class="nav-logo">
+      <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="docs.html">Docs</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-secondary">User Login</a>
+    </div>
+  </nav>
+
+  <!-- ── Auth Card ── -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <span class="auth-badge">⬡ Admin Access</span>
+        <h1>Internal Panel</h1>
+        <p>Restricted to administrators. Enter your admin password to continue.</p>
+      </div>
+
+      <div id="admin-alert" class="alert alert-error" role="alert"></div>
+
+      <form class="auth-form" id="admin-login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="admin-password-input">Admin Password</label>
+          <input
+            class="form-input"
+            type="password"
+            id="admin-password-input"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <button class="btn btn-primary btn-full" type="submit" id="admin-login-btn">
+          Access Panel
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Venn-Vault &nbsp;·&nbsp; <a href="index.html">Home</a></p>
+  </footer>
+
+  <script src="frontend/admin.js" defer></script>
+</body>
+</html>

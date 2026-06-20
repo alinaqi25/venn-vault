@@ -1,30 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Venn-Vault</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venn-Vault — Zero-Framework Node.js Banking API</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="navbar" aria-label="Main Navigation">
-  
-  <a href="#" class="nav-logo">
-    <img src="venn-vault-logo.png" alt="Venn Vault Logo" height="40">
-  </a>
 
-  <ul class="nav-links">
-    <li><a href="#">Home</a></li>
-    <li><a href="#">Features</a></li>
-    <li><a href="#">Docs</a></li>
-  </ul>
+  <!-- ── Navbar ── -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <a href="index.html" class="nav-logo">
+      <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="docs.html">Docs</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-secondary">Log In</a>
+      <a href="register.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
 
-  <div class="nav-actions">
-    <a href="#" class="btn btn-secondary">Log In</a>
-    <a href="#" class="btn btn-primary">Register</a>
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <span class="hero-eyebrow">
+      <span>●</span>
+      Vanilla Node.js &nbsp;·&nbsp; PostgreSQL &nbsp;·&nbsp; JWT Auth
+    </span>
+
+    <h1>Banking infrastructure,<br><em>built from scratch.</em></h1>
+
+    <p class="hero-sub">
+      Venn-Vault is a full-stack banking API written in pure Node.js —
+      no Express, no shortcuts. Custom routing, raw HTTP, bcrypt, JWTs,
+      and a PostgreSQL ledger under the hood.
+    </p>
+
+    <div class="hero-actions">
+      <a href="register.html" class="btn btn-primary">Open an Account</a>
+      <a href="docs.html" class="btn btn-secondary">Read the Docs</a>
+    </div>
+  </section>
+
+  <!-- ── Tech Stack Strip ── -->
+  <div class="stack-strip" aria-label="Tech stack">
+    <span class="stack-item"><span class="stack-dot"></span>Node.js (native http)</span>
+    <span class="stack-item"><span class="stack-dot"></span>PostgreSQL</span>
+    <span class="stack-item"><span class="stack-dot"></span>bcrypt</span>
+    <span class="stack-item"><span class="stack-dot"></span>JSON Web Tokens</span>
+    <span class="stack-item"><span class="stack-dot"></span>node:crypto</span>
+    <span class="stack-item"><span class="stack-dot"></span>HTTP-only Cookies</span>
   </div>
 
-</nav>
+  <!-- ── Highlights ── -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Built to understand, not just ship.</h2>
+      <p>
+        Every layer of this project was written intentionally — to strip away
+        the abstractions and understand what's actually happening inside a
+        web server.
+      </p>
+    </div>
+
+    <div class="highlights-grid">
+      <div class="highlight-card">
+        <div class="highlight-icon">⚙</div>
+        <h3>Zero-Framework Architecture</h3>
+        <p>
+          No Express. Routing, request parsing, and response handling are
+          implemented directly on Node's native <code>http</code> module —
+          every byte is accounted for.
+        </p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">🔒</div>
+        <h3>Airtight Security Model</h3>
+        <p>
+          Passwords hashed with <code>bcrypt</code>, sessions managed via
+          stateless JWTs, and secure HTTP-only cookies. Auth that would hold
+          up in production.
+        </p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">🗄</div>
+        <h3>Relational Database Layer</h3>
+        <p>
+          Persistent user accounts and a proper transaction ledger backed by
+          PostgreSQL. Real schemas, real queries, no ORM magic.
+        </p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">💳</div>
+        <h3>Core Banking Operations</h3>
+        <p>
+          Full deposit, withdrawal, and fund transfer flows — all routed
+          through the custom parser and hitting the database on every
+          transaction.
+        </p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">🛡</div>
+        <h3>Admin Control Panel</h3>
+        <p>
+          A separate admin interface for viewing all accounts, freezing or
+          deleting users, and inspecting any transaction history in the
+          system.
+        </p>
+      </div>
+
+      <div class="highlight-card">
+        <div class="highlight-icon">🧪</div>
+        <h3>Sandbox Economy</h3>
+        <p>
+          Deposits and withdrawals intentionally allow unlimited dummy inputs,
+          so you can stress-test the routing and database layers without
+          worrying about fake balances.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA Band ── -->
+  <div class="section" style="padding-top: 0;">
+    <div class="cta-band">
+      <div>
+        <h2>Read the implementation docs.</h2>
+        <p>Architecture decisions, setup guide, environment variables, and API endpoints — all documented.</p>
+      </div>
+      <div style="display: flex; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap;">
+        <a href="docs.html" class="btn btn-primary">Go to Docs</a>
+        <a href="https://github.com/alinaqi25/venn-vault" target="_blank" rel="noopener" class="btn btn-ghost">GitHub ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <p>Venn-Vault &nbsp;·&nbsp; Built with Node.js &amp; PostgreSQL &nbsp;·&nbsp;
+      <a href="https://github.com/alinaqi25/venn-vault" target="_blank" rel="noopener">Source on GitHub</a>
+    </p>
+  </footer>
+
 </body>
 </html>

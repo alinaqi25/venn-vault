@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Features — Venn-Vault</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <a href="index.html" class="nav-logo">
+      <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="features.html" class="active">Features</a></li>
+      <li><a href="docs.html">Docs</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-secondary">Log In</a>
+      <a href="register.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
+
+  <!-- ── Page Hero ── -->
+  <section class="features-hero">
+    <div class="dot-grid"></div>
+    <div style="position: relative; z-index: 1;">
+      <span class="hero-eyebrow">What's inside</span>
+      <h1>Every feature, intentionally built.</h1>
+      <p>
+        No framework did this for us. Each capability below was designed,
+        routed, and wired to the database by hand.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Feature Cards Grid ── -->
+  <div class="features-grid">
+
+    <!-- 1 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">⚙</div>
+        <div>
+          <h3>Zero-Framework HTTP Server</h3>
+          <span class="tag">Backend Core</span>
+        </div>
+      </div>
+      <p>
+        The entire request lifecycle — parsing URLs, reading body streams,
+        setting response headers — is handled using only Node's native
+        <code>http</code> module. No Express, no Koa, no Fastify. The router
+        is a hand-rolled pattern matcher that dispatches to the right handler
+        based on method and path.
+      </p>
+    </div>
+
+    <!-- 2 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🔑</div>
+        <div>
+          <h3>bcrypt Password Hashing</h3>
+          <span class="tag">Security</span>
+        </div>
+      </div>
+      <p>
+        Plaintext passwords never touch the database. On registration, the
+        password is salted and hashed using <code>bcrypt</code> before being
+        stored. On login, the provided password is compared against the stored
+        hash — the original is never recoverable or reversible.
+      </p>
+    </div>
+
+    <!-- 3 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🪙</div>
+        <div>
+          <h3>JWT-Based Authentication</h3>
+          <span class="tag">Security</span>
+        </div>
+      </div>
+      <p>
+        Sessions are stateless. After login, the server signs a JSON Web Token
+        containing the user's ID and account number, then sets it as a
+        secure, HTTP-only cookie. Every protected route verifies the token
+        before processing the request — no session store, no global state.
+      </p>
+    </div>
+
+    <!-- 4 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🔮</div>
+        <div>
+          <h3>Native Crypto UUIDs</h3>
+          <span class="tag">Security</span>
+        </div>
+      </div>
+      <p>
+        Account numbers and wallet IDs are generated using Node's built-in
+        <code>node:crypto</code> module — no third-party UUID libraries needed.
+        Each identifier is cryptographically random and unique across the
+        entire database.
+      </p>
+    </div>
+
+    <!-- 5 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🗄</div>
+        <div>
+          <h3>PostgreSQL Relational Ledger</h3>
+          <span class="tag">Database</span>
+        </div>
+      </div>
+      <p>
+        Users and transactions live in separate, related PostgreSQL tables.
+        Every deposit, withdrawal, and transfer writes a ledger entry with a
+        type, amount, timestamp, and reference to the account involved — giving
+        you a full, queryable audit trail.
+      </p>
+    </div>
+
+    <!-- 6 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">💸</div>
+        <div>
+          <h3>Fund Transfers</h3>
+          <span class="tag">Banking</span>
+        </div>
+      </div>
+      <p>
+        Transfer funds between accounts by email or wallet ID. The backend
+        validates the recipient, deducts from the sender's balance, credits
+        the recipient, and writes two ledger entries atomically — debit and
+        credit — so the books always balance.
+      </p>
+    </div>
+
+    <!-- 7 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">📊</div>
+        <div>
+          <h3>Transaction History</h3>
+          <span class="tag">Banking</span>
+        </div>
+      </div>
+      <p>
+        Each user can view their complete transaction history, ordered by
+        timestamp. Deposits credit green, withdrawals and transfers debit red.
+        The admin panel can also inspect the transaction history of any account
+        in the system.
+      </p>
+    </div>
+
+    <!-- 8 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🛡</div>
+        <div>
+          <h3>Admin Control Panel</h3>
+          <span class="tag">Admin</span>
+        </div>
+      </div>
+      <p>
+        A password-protected admin interface lets you view all registered
+        users, their balances and statuses, and take actions: freeze accounts,
+        unfreeze them, delete users permanently, or drill into any user's
+        transaction log. Stats on total, active, and frozen accounts are
+        computed live.
+      </p>
+    </div>
+
+    <!-- 9 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🧪</div>
+        <div>
+          <h3>Sandbox Economy</h3>
+          <span class="tag">Testing</span>
+        </div>
+      </div>
+      <p>
+        Deposits and withdrawals accept arbitrary values without real-world
+        constraints — intentionally. This lets you flood the transaction layer
+        with test data, verify routing logic, and inspect database writes
+        without any external payment integration in the way.
+      </p>
+    </div>
+
+    <!-- 10 -->
+    <div class="feature-card">
+      <div class="feature-card-top">
+        <div class="feature-icon">🍪</div>
+        <div>
+          <h3>Secure Cookie Management</h3>
+          <span class="tag">Security</span>
+        </div>
+      </div>
+      <p>
+        Auth tokens are delivered via <code>HttpOnly</code> cookies — making
+        them inaccessible to JavaScript running on the page and protecting
+        against XSS-based token theft. The server manually sets and clears
+        these cookies as part of the login and logout flows.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="site-footer">
+    <p>Venn-Vault &nbsp;·&nbsp; Built with Node.js &amp; PostgreSQL &nbsp;·&nbsp;
+      <a href="https://github.com/alinaqi25/venn-vault" target="_blank" rel="noopener">Source on GitHub</a>
+    </p>
+  </footer>
+
+</body>
+</html>

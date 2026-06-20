@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Venn-Vault</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <a href="index.html" class="nav-logo">
+      <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="docs.html">Docs</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-secondary">Log In</a>
+      <a href="register.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
+
+  <!-- ── Auth Card ── -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <h1>Create an account.</h1>
+        <p>Your account number will be generated automatically on registration.</p>
+      </div>
+
+      <div id="register-alert" class="alert" role="alert"></div>
+
+      <form class="auth-form" id="register-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="register-name">Full Name</label>
+          <input
+            class="form-input"
+            type="text"
+            id="register-name"
+            placeholder="Jane Doe"
+            autocomplete="name"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="register-email">Email Address</label>
+          <input
+            class="form-input"
+            type="email"
+            id="register-email"
+            placeholder="jane@example.com"
+            autocomplete="email"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="register-password">Password</label>
+          <input
+            class="form-input"
+            type="password"
+            id="register-password"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+          >
+          <span class="form-hint">Minimum 8 characters.</span>
+        </div>
+
+        <button class="btn btn-primary btn-full" type="submit" id="register-submit">
+          Create Account
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        Already have an account? <a href="login.html">Log in</a>
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Venn-Vault &nbsp;·&nbsp; <a href="index.html">Home</a></p>
+  </footer>
+
+  <script type="module" src="frontend/register.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In — Venn-Vault</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <a href="index.html" class="nav-logo">
+      <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="docs.html">Docs</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-secondary">Log In</a>
+      <a href="register.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
+
+  <!-- ── Auth Card ── -->
+  <main class="auth-main">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <h1>Welcome back.</h1>
+        <p>Sign in with your account number and password.</p>
+      </div>
+
+      <div id="login-alert" class="alert alert-error" role="alert"></div>
+
+      <form class="auth-form" id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="login-account-number">Account Number</label>
+          <input
+            class="form-input"
+            type="text"
+            id="login-account-number"
+            placeholder="VV-XXXXXXXX"
+            autocomplete="username"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input
+            class="form-input"
+            type="password"
+            id="login-password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <button class="btn btn-primary btn-full" type="submit" id="login-submit">
+          Log In
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        No account? <a href="register.html">Register here</a>
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Venn-Vault &nbsp;·&nbsp; <a href="index.html">Home</a></p>
+  </footer>
+
+  <script type="module" src="frontend/login.js" defer></script>
+</body>
+</html>

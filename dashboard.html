@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Venn-Vault</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dash-page">
+
+  <!-- ── Navbar ── -->
+  <nav class="navbar" aria-label="Main Navigation">
+    <a href="index.html" class="nav-logo">
+      <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+    </a>
+    <ul class="nav-links"></ul>
+    <div class="nav-actions">
+      <button class="btn btn-ghost btn-sm" id="dash-account-info-btn">Account Info</button>
+      <button class="btn btn-secondary btn-sm" id="dash-logout-btn">Log Out</button>
+    </div>
+  </nav>
+
+  <!-- ── Main ── -->
+  <main class="dash-main">
+
+    <!-- Welcome -->
+    <div class="dash-welcome">
+      <div class="dash-welcome-text">
+        <p>Welcome back</p>
+        <h2 id="dashboard-user-name">Loading…</h2>
+      </div>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="balance-card">
+      <div>
+        <p class="balance-label">Current Balance</p>
+        <p class="balance-amount" id="dashboard-user-balance">—</p>
+        <p class="balance-acct" id="dashboard-acct-display">Account No. —</p>
+      </div>
+      <div style="text-align: right;">
+        <p class="balance-label">Status</p>
+        <span class="badge badge-active" id="dashboard-status-badge">Active</span>
+      </div>
+    </div>
+
+    <!-- Action Tiles -->
+    <div class="dash-actions">
+      <button class="action-tile" id="deposit-action-button" aria-label="Deposit funds">
+        <span class="action-tile-icon">↓</span>
+        Deposit
+      </button>
+      <button class="action-tile" id="withdraw-action-button" aria-label="Withdraw funds">
+        <span class="action-tile-icon">↑</span>
+        Withdraw
+      </button>
+      <button class="action-tile" id="transfer-action-button" aria-label="Transfer funds">
+        <span class="action-tile-icon">⇄</span>
+        Transfer
+      </button>
+      <button class="action-tile" id="txn-history-action-button" aria-label="Transaction history">
+        <span class="action-tile-icon">≡</span>
+        History
+      </button>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div>
+      <p class="section-label">Recent Transactions</p>
+      <div class="txn-list" id="recent-txn-list">
+        <p class="txn-empty">Loading transactions…</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════
+       PANELS (slide in from right)
+  ═══════════════════════════════════════ -->
+
+  <!-- Shared overlay -->
+  <div class="panel-overlay" id="panel-overlay"></div>
+
+  <!-- Account Info Panel -->
+  <aside class="panel" id="account-info-panel" aria-label="Account Information">
+    <div class="panel-header">
+      <h3>Account Details</h3>
+      <button class="panel-close" id="close-account-info" aria-label="Close panel">✕</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0;">
+      <div class="modal-row">
+        <span class="modal-row-label">Name</span>
+        <span class="modal-row-value" id="info-name">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Account No.</span>
+        <span class="modal-row-value mono" id="info-account-number">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Email</span>
+        <span class="modal-row-value" id="info-email">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Wallet ID</span>
+        <span class="modal-row-value mono" id="info-wallet-id">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Balance</span>
+        <span class="modal-row-value" id="info-balance">—</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Member Since</span>
+        <span class="modal-row-value" id="info-date">—</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Deposit Panel -->
+  <aside class="panel" id="deposit-panel" aria-label="Deposit Funds">
+    <div class="panel-header">
+      <h3>Deposit Funds</h3>
+      <button class="panel-close" id="close-deposit-panel" aria-label="Close panel">✕</button>
+    </div>
+    <div id="deposit-alert" class="alert" role="alert"></div>
+    <form class="panel-form" id="deposit-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="deposit-input">Amount</label>
+        <input class="form-input" type="number" id="deposit-input" placeholder="0.00" min="0.01" step="0.01" required>
+      </div>
+      <button class="btn btn-primary btn-full" type="submit" id="deposit-submit">Deposit</button>
+    </form>
+  </aside>
+
+  <!-- Withdraw Panel -->
+  <aside class="panel" id="withdraw-panel" aria-label="Withdraw Funds">
+    <div class="panel-header">
+      <h3>Withdraw Funds</h3>
+      <button class="panel-close" id="close-withdraw-panel" aria-label="Close panel">✕</button>
+    </div>
+    <div id="withdraw-alert" class="alert" role="alert"></div>
+    <form class="panel-form" id="withdraw-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="withdraw-input">Amount</label>
+        <input class="form-input" type="number" id="withdraw-input" placeholder="0.00" min="0.01" step="0.01" required>
+        <span class="panel-hint">Balance after: <span id="remaining-balance">—</span></span>
+      </div>
+      <button class="btn btn-primary btn-full" type="submit" id="withdraw-submit">Withdraw</button>
+    </form>
+  </aside>
+
+  <!-- Transfer Panel -->
+  <aside class="panel" id="transfer-panel" aria-label="Transfer Funds">
+    <div class="panel-header">
+      <h3>Transfer Funds</h3>
+      <button class="panel-close" id="close-transfer-panel" aria-label="Close panel">✕</button>
+    </div>
+    <div id="transfer-alert" class="alert" role="alert"></div>
+    <form class="panel-form" id="transfer-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="transfer-recipient-input">Recipient</label>
+        <input class="form-input" type="text" id="transfer-recipient-input" placeholder="Email or Wallet ID" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="transfer-amount-input">Amount</label>
+        <input class="form-input" type="number" id="transfer-amount-input" placeholder="0.00" min="0.01" step="0.01" required>
+        <span class="panel-hint">Balance after: <span id="transfer-remaining-balance">—</span></span>
+      </div>
+      <button class="btn btn-primary btn-full" type="submit" id="transfer-submit">Transfer</button>
+    </form>
+  </aside>
+
+  <!-- Transaction History Panel -->
+  <aside class="panel" id="txn-history-panel" aria-label="Transaction History">
+    <div class="panel-header">
+      <h3>Transaction History</h3>
+      <button class="panel-close" id="close-txn-history-panel" aria-label="Close panel">✕</button>
+    </div>
+    <div class="txn-list" id="txn-list-container">
+      <p class="txn-empty">Loading…</p>
+    </div>
+  </aside>
+
+  <script type="module" src="frontend/dashboard.js" defer></script>
+</body>
+</html>
