@@ -46,5 +46,20 @@ const server = http.createServer(async (request,response)=>{
     response.setHeader('Content-Type', 'application/json')
     const url = request.url
     const method = request.method
-    
+    console.log(`${method} request made on the URL: ${url}\n`)
+
+    if(method==='OPTIONS'){
+        response.writeHead(204, {
+            "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+        })
+        return response.end()
+    }
+
+    if(  method === "GET" && !url.startsWith("/auth") && !url.startsWith("/wallet") && url !== "/admin/login" && !url.startsWith("/admin/users")){
+        const safePath = url == '/' ? '/index' : url;
+    }
+
 })
