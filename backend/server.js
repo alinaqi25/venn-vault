@@ -1,6 +1,9 @@
+// SERVER.JS CODE
+
 import http, { request } from "http";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+// import * as db from "./mockDB.js";
 import crypto from "crypto";
 
 import fs from "fs";
@@ -84,27 +87,26 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  
-    if (url === "/auth/register" && method === "POST") {
-      try {
-        const body = await parseRequestBody(request);
-        const { name, email, password } = body;
-  
-        if (!name || !email || !password) {
-          return sendResponse(response, 400, {
-            error: "Missing required fields",
-          });
-        }
-  
-        let userExists; // first it was const userExists = db.findUserByEmail(email)
-        if (userExists) {
-          return sendResponse(response, 409, {
-            error: "Email already registered",
-          });
-        }
-  
-        const hashedPassword = await bcrypt.hash(password, 10);
-        /* const newUser = {
+  if (url === "/auth/register" && method === "POST") {
+    try {
+      const body = await parseRequestBody(request);
+      const { name, email, password } = body;
+
+      if (!name || !email || !password) {
+        return sendResponse(response, 400, {
+          error: "Missing required fields",
+        });
+      }
+
+      let userExists; // first it was const userExists = db.findUserByEmail(email)
+      if (userExists) {
+        return sendResponse(response, 409, {
+          error: "Email already registered",
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      /* const newUser = {
          id: crypto.randomUUID(),
           accountNumber: db.generateNextAccountNumber(),
           name,
@@ -122,29 +124,28 @@ const server = http.createServer(async (request, response) => {
           currency: "PKR",
         });
    */
-        const token = jwt.sign(
-          { accountNumber: newUser.accountNumber },
-          JWT_SECRET_KEY,
-          {
-            expiresIn: "10m",
-          },
-        );
-        const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
-  
-        return sendResponse(
-          response,
-          201,
-          {
-            success: true,
-            message: "User registered and logged in successfully!",
-          },
-          { "Set-Cookie": cookieConfig },
-        );
-      } catch (error) {
-        return sendResponse(response, 500, { error: "Internal Server Error" });
-      }
+      const token = jwt.sign(
+        { accountNumber: newUser.accountNumber },
+        JWT_SECRET_KEY,
+        {
+          expiresIn: "10m",
+        },
+      );
+      const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
+
+      return sendResponse(
+        response,
+        201,
+        {
+          success: true,
+          message: "User registered and logged in successfully!",
+        },
+        { "Set-Cookie": cookieConfig },
+      );
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal Server Error" });
     }
-  
+  }
 
   if (url === "/api/auth/login" && method === "POST") {
     try {
@@ -179,6 +180,440 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  
+  if (url === "/auth/profile" && method === "GET") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
 
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, {
+          error: "Not authenticated. No token found.",
+        });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      let user; // originally this was: const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      // const wallet = db.findWalletByUserId(user.id);
+
+      return sendResponse(response, 200, {
+        success: true,
+        /*           user: {
+            id: user.id,
+            accountNumber: user.accountNumber,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            dateCreated: user.dateCreated,
+          },
+          wallet: wallet
+            ? {
+                id: wallet.id,
+                user_id: user.id,
+                balance: wallet.balance,
+                currency: wallet.currency,
+              }
+            : null,
+ */
+      });
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- WALLET DEPOSIT ROUTE ---
+  if (url === "/wallet/deposit" && method === "POST") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (db.isUserFrozen(user.id)) {
+        return sendResponse(response, 403, {
+          error: "Your account has been frozen. Please contact support.",
+        });
+      }
+
+      const { amount } = await parseRequestBody(request);
+      if (!amount || amount <= 0) {
+        return sendResponse(response, 400, {
+          error: "Invalid deposit amount.",
+        });
+      }
+
+      const wallet = db.findWalletByUserId(user.id);
+      if (!wallet) {
+        return sendResponse(response, 404, { error: "Wallet not found." });
+      }
+
+      wallet.balance += amount;
+
+      db.recordTransaction({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        type: "Deposit",
+        amount: amount,
+        timestamp: Date.now(),
+      });
+
+      return sendResponse(response, 200, {
+        success: true,
+        message: "Deposit processed successfully.",
+        newBalance: wallet.balance,
+      });
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- WALLET WITHDRAW ROUTE ---
+  if (url === "/wallet/withdraw" && method === "POST") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (db.isUserFrozen(user.id)) {
+        return sendResponse(response, 403, {
+          error: "Your account has been frozen. Please contact support.",
+        });
+      }
+
+      const { amount } = await parseRequestBody(request);
+      if (!amount || amount <= 0) {
+        return sendResponse(response, 400, {
+          error: "Invalid withdrawal amount.",
+        });
+      }
+
+      const wallet = db.findWalletByUserId(user.id);
+      if (!wallet) {
+        return sendResponse(response, 404, { error: "Wallet not found." });
+      }
+
+      if (wallet.balance < amount) {
+        return sendResponse(response, 400, { error: "Insufficient funds." });
+      }
+
+      wallet.balance -= amount;
+
+      db.recordTransaction({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        type: "Withdrawal",
+        amount: amount,
+        timestamp: Date.now(),
+      });
+
+      return sendResponse(response, 200, {
+        success: true,
+        message: "Withdrawal processed successfully.",
+        newBalance: wallet.balance,
+      });
+    } catch (error) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- WALLET TRANSFER ROUTE ---
+  if (url === "/wallet/transfer" && method === "POST") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const sender = db.findUserByAccNumber(decoded.accountNumber);
+      if (!sender) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (db.isUserFrozen(sender.id)) {
+        return sendResponse(response, 403, {
+          error: "Your account has been frozen. Please contact support.",
+        });
+      }
+
+      const { amount, recipient } = await parseRequestBody(request);
+
+      if (!amount || amount <= 0) {
+        return sendResponse(response, 400, {
+          error: "Invalid transfer amount.",
+        });
+      }
+      if (!recipient) {
+        return sendResponse(response, 400, {
+          error: "Recipient identifier missing.",
+        });
+      }
+
+      let recipientUserId = null;
+
+      // try searching recipient by email
+      const recipientUser = db.findUserByEmail(recipient);
+      if (recipientUser) {
+        recipientUserId = recipientUser.id;
+      } else {
+        // else try searching  by wallet id
+        const recipientWallet = db.findWalletById(recipient);
+        if (recipientWallet) {
+          recipientUserId = recipientWallet.user_id;
+        }
+      }
+
+      if (!recipientUserId) {
+        return sendResponse(response, 404, {
+          error: "Recipient not found. Please check the email or Wallet ID.",
+        });
+      }
+
+      if (recipientUserId === sender.id) {
+        return sendResponse(response, 400, {
+          error: "Cannot transfer to yourself.",
+        });
+      }
+
+      try {
+        db.executeTransfer(sender.id, recipientUserId, amount);
+      } catch (err) {
+        return sendResponse(response, 400, { error: err.message });
+      }
+
+      const updatedSenderWallet = db.findWalletByUserId(sender.id);
+
+      return sendResponse(response, 200, {
+        success: true,
+        message: "Transfer processed successfully.",
+        newBalance: updatedSenderWallet.balance,
+      });
+    } catch (error) {
+      console.error("Transfer Error:", error);
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // --- TRANSACTION HISTORY ROUTE ---
+  if (url === "/wallet/transactions" && method === "GET") {
+    try {
+      const cookieHeader = request.headers.cookie || "";
+      const tokenMatch = cookieHeader.match(/token=([^;]+)/);
+      const token = tokenMatch ? tokenMatch[1] : null;
+
+      if (!token) {
+        return sendResponse(response, 401, { error: "Not authenticated." });
+      }
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET_KEY);
+      } catch (err) {
+        return sendResponse(response, 401, {
+          error: "Session expired or invalid token.",
+        });
+      }
+
+      const user = db.findUserByAccNumber(decoded.accountNumber);
+      if (!user) {
+        return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      const history = db.getUserTransactions(user.id);
+
+      return sendResponse(response, 200, {
+        success: true,
+        transactions: history,
+      });
+    } catch (error) {
+      console.error("Transaction Fetch Error:", error);
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  if (url === "/admin/login" && method === "POST") {
+    try {
+      const { password } = await parseRequestBody(request);
+      if (!password) {
+        return sendResponse(response, 400, { error: "Password required." });
+      }
+
+      const adminUser = db.findUserByEmail("admin@neopay.internal");
+      if (!adminUser) {
+        return sendResponse(response, 500, { error: "Admin not configured." });
+      }
+
+      const isMatch = await bcrypt.compare(password, adminUser.password_hash);
+      if (!isMatch) {
+        return sendResponse(response, 401, {
+          error: "Incorrect admin password.",
+        });
+      }
+
+      const token = jwt.sign(
+        { accountNumber: adminUser.accountNumber, role: "admin" },
+        JWT_SECRET_KEY,
+        { expiresIn: "30m" },
+      );
+      const cookieConfig = `adminToken=${token}; HttpOnly; SameSite=Lax; Max-Age=1800; Path=/`;
+      return sendResponse(
+        response,
+        200,
+        { success: true, message: "Admin login successful." },
+        { "Set-Cookie": cookieConfig },
+      );
+    } catch (err) {
+      return sendResponse(response, 500, { error: "Internal server error" });
+    }
+  }
+
+  // ─── ADMIN AUTH HELPER (inline, used by admin routes below) ──
+  function verifyAdminToken(request) {
+    const cookieHeader = request.headers.cookie || "";
+    const match = cookieHeader.match(/adminToken=([^;]+)/);
+    if (!match) return null;
+    try {
+      const decoded = jwt.verify(match[1], JWT_SECRET_KEY);
+      if (decoded.role !== "admin") return null;
+      return decoded;
+    } catch {
+      return null;
+    }
+  }
+
+  if (url === "/admin/users" && method === "GET") {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const users = db.getAllUsers().filter((u) => u.role !== "admin");
+    const usersWithBalance = users.map((u) => {
+      const wallet = db.findWalletByUserId(u.id);
+      return {
+        ...u,
+        balance: wallet ? wallet.balance : 0,
+        currency: wallet ? wallet.currency : "PKR",
+      };
+    });
+    return sendResponse(response, 200, {
+      success: true,
+      users: usersWithBalance,
+    });
+  }
+
+  if (
+    url.startsWith("/admin/users/") &&
+    url.endsWith("/transactions") &&
+    method === "GET"
+  ) {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const userId = url.split("/")[3];
+    const transactions = db.getUserTransactions(userId);
+    return sendResponse(response, 200, { success: true, transactions });
+  }
+
+  if (
+    url.startsWith("/admin/users/") &&
+    url.endsWith("/delete") &&
+    method === "POST"
+  ) {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const userId = url.split("/")[3];
+    const deleted = db.deleteUser(userId);
+    if (!deleted)
+      return sendResponse(response, 404, { error: "User not found." });
+    return sendResponse(response, 200, {
+      success: true,
+      message: "User deleted.",
+    });
+  }
+
+  if (
+    url.startsWith("/admin/users/") &&
+    url.endsWith("/freeze") &&
+    method === "POST"
+  ) {
+    const admin = verifyAdminToken(request);
+    if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
+
+    const userId = url.split("/")[3];
+    const { frozen } = await parseRequestBody(request);
+    const result = db.setUserFrozen(userId, !!frozen);
+    if (!result)
+      return sendResponse(response, 404, { error: "User not found." });
+    return sendResponse(response, 200, {
+      success: true,
+      message: frozen ? "User frozen." : "User unfrozen.",
+    });
+  }
+
+  return sendResponse(response, 404, { error: "Route not found" });
+});
+
+// STARTING THE SERVER
+
+server.listen(PORT, () => {
+  console.log(`Listening at ${PORT}...`);
 });
