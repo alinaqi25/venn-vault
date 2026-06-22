@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS wallets CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
@@ -30,7 +33,7 @@ CREATE TABLE transactions (
     create_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_amount_positive CHECK (amount > 0),
     CONSTRAINT chk_txn_type CHECK(transaction_type IN('WITHDRAW', 'DEPOSIT', 'TRANSFER'))
-)
+);
 
 -- CREATE INDEXES HERE 
 
