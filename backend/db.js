@@ -52,21 +52,28 @@ export async function seedAdmin(adminObject) {
 }
 
 export async function getAllUsers() {
-  return query(`SELECT account_number AS "accountNumber", name, email, password_hash AS "passwordHash", account_type AS "accountType", is_frozen AS "isFrozen", create_time AS "creatTime", is_deleted AS "isDeleted"
+  return query(`SELECT account_number AS "accountNumber", name, email, password_hash AS "passwordHash", account_type AS "accountType", is_frozen AS "isFrozen", create_time AS "creatTime", is_deleted AS "isDeleted", id 
     FROM users`);
 }
 
 export async function deleteUser(userId) {
-  const rows = await query(`DELETE FROM users WHERE id = $1 RETURNING id`, [userId]);
+  const rows = await query(`UPDATE users SET is_deleted = TRUE WHERE id = $1 RETURNING id`, [userId]);
   return rows.length > 0;
 }
 
+export async function updateWalletBalance(walletId, newBalance) {
+  return queryOne(
+    `UPDATE wallets SET balance = $1 WHERE id = $2 RETURNING *`,
+    [newBalance, walletId]
+  );
+}
+
 export async function setUserFrozen(userId, frozen) {
-  const rows = await query(`UPDATE users SET is_frozen = $1 WHERE id = $2 RETURNING id`, [
-    frozen,
-    userId,
-  ]);
-  return rows.length > 0
+  const rows = await query(
+    `UPDATE users SET is_frozen = $1 WHERE id = $2 RETURNING id`,
+    [frozen, userId],
+  );
+  return rows.length > 0;
 }
 
 export async function isUserFrozen(userId) {
@@ -199,4 +206,3 @@ export async function getUserTransactions(userId) {
     [userId],
   );
 }
- 

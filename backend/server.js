@@ -66,7 +66,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (method === "GET" && !url.startsWith("/api/")) {
-    const safePath = url == "/" ? "/index" : url;
+    const safePath = url == "/" ? "/index.html" : url;
     const filePath = path.join(__dirname, "..", safePath);
     const ext = path.extname(filePath);
     const mimeTypes = {
@@ -91,7 +91,7 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  if (url === "/auth/register" && method === "POST") {
+  if (url === "/api/auth/register" && method === "POST"){
     try {
       const body = await parseRequestBody(request);
       const { name, email, password } = body;
@@ -158,6 +158,10 @@ const server = http.createServer(async (request, response) => {
         return sendResponse(response, 404, { error: "User does not exist." });
       }
 
+      if (user.is_deleted) {
+        return sendResponse(response, 403, { error: "This account has been deleted." });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
         return sendResponse(response, 401, { error: "Incorrect password" });
@@ -178,7 +182,7 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  if (url === "/auth/profile" && method === "GET") {
+  if (url === "/api/auth/profile" && method === "GET") {
     try {
       const cookieHeader = request.headers.cookie || "";
 
@@ -203,6 +207,10 @@ const server = http.createServer(async (request, response) => {
       let user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (user.is_deleted) {
+        return sendResponse(response, 403, { error: "This account has been deleted." });
       }
 
       const wallet = await db.findWalletByUserId(user.id);
@@ -231,7 +239,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- WALLET DEPOSIT ROUTE ---
-  if (url === "/wallet/deposit" && method === "POST") {
+  if(url === "/api/wallet/deposit" && method === "POST") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -253,6 +261,10 @@ const server = http.createServer(async (request, response) => {
       const user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (user.is_deleted) {
+        return sendResponse(response, 403, { error: "This account has been deleted." });
       }
 
       if (await db.isUserFrozen(user.id)) {
@@ -296,7 +308,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- WALLET WITHDRAW ROUTE ---
-  if (url === "/wallet/withdraw" && method === "POST") {
+  if (url === "/api/wallet/withdraw" && method === "POST") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -318,6 +330,10 @@ const server = http.createServer(async (request, response) => {
       const user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (user.is_deleted) {
+        return sendResponse(response, 403, { error: "This account has been deleted." });
       }
 
       if (await db.isUserFrozen(user.id)) {
@@ -364,7 +380,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- WALLET TRANSFER ROUTE ---
-  if (url === "/wallet/transfer" && method === "POST") {
+  if(url === "/api/wallet/transfer" && method === "POST") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -386,6 +402,10 @@ const server = http.createServer(async (request, response) => {
       const sender = await db.findUserByAccNumber(decoded.accountNumber);
       if (!sender) {
         return sendResponse(response, 404, { error: "User not found." });
+      }
+
+      if (sender.is_deleted) {
+        return sendResponse(response, 403, { error: "This account has been deleted." });
       }
 
       if (await db.isUserFrozen(sender.id)) {
@@ -412,6 +432,9 @@ const server = http.createServer(async (request, response) => {
 
       const recipientUser = await db.findUserByEmail(recipient);
       if (recipientUser) {
+        if (recipientUser.is_deleted) {
+          return sendResponse(response, 400, { error: "Recipient account is no longer active." });
+        }
         if (recipientUser.id === sender.id)
           return sendResponse(response, 400, {
             error: "Cannot transfer to yourself.",
@@ -449,7 +472,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- TRANSACTION HISTORY ROUTE ---
-  if (url === "/wallet/transactions" && method === "GET") {
+ if (url === "/api/wallet/transactions" && method === "GET") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -485,7 +508,7 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  if (url === "/admin/login" && method === "POST") {
+ if (url === "/api/admin/login" && method === "POST") {
     try {
       const { password } = await parseRequestBody(request);
       if (!password) {
@@ -534,7 +557,7 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  if (url === "/admin/users" && method === "GET") {
+  if (url === "/api/admin/users" && method === "GET") {
     const admin = verifyAdminToken(request);
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
@@ -558,27 +581,27 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (
-    url.startsWith("/admin/users/") &&
+    url.startsWith("/api/admin/users/") &&
     url.endsWith("/transactions") &&
     method === "GET"
   ) {
     const admin = verifyAdminToken(request);
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
-    const userId = url.split("/")[3];
+    const userId = url.split("/")[4];
     const transactions = await db.getUserTransactions(userId);
     return sendResponse(response, 200, { success: true, transactions });
   }
 
   if (
-    url.startsWith("/admin/users/") &&
+    url.startsWith("/api/admin/users/") &&
     url.endsWith("/delete") &&
     method === "POST"
   ) {
     const admin = verifyAdminToken(request);
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
-    const userId = url.split("/")[3];
+    const userId = url.split("/")[4];
     const deleted = await db.deleteUser(userId);
     if (!deleted)
       return sendResponse(response, 404, { error: "User not found." });
@@ -589,14 +612,14 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (
-    url.startsWith("/admin/users/") &&
+    url.startsWith("/api/admin/users/") &&
     url.endsWith("/freeze") &&
     method === "POST"
   ) {
     const admin = verifyAdminToken(request);
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
-    const userId = url.split("/")[3];
+    const userId = url.split("/")[4];
     const { frozen } = await parseRequestBody(request);
     const result = await db.setUserFrozen(userId, !!frozen);
     if (!result)
