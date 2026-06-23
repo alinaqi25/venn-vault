@@ -47,7 +47,7 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (res.ok && data.success) {
-      window.location.href = "/dashboard.html";
+      window.location.href = "/dashboard";
     } else {
       showAlert(data.error || "Registration failed. Please try again.");
       submitBtn.disabled = false;

@@ -72,14 +72,14 @@ async function loadProfile() {
     });
 
     if (res.status === 401 || res.status === 403) {
-      window.location.href = "/login.html";
+      window.location.href = "/login";
       return;
     }
 
     const data = await res.json();
 
     if (!res.ok || !data.success) {
-      window.location.href = "/login.html";
+      window.location.href = "/login";
       return;
     }
 
@@ -117,7 +117,7 @@ async function loadProfile() {
     // Load recent transactions
     loadRecentTransactions();
   } catch (err) {
-    window.location.href = "/login.html";
+    window.location.href = "/login";
   }
 }
 
@@ -400,7 +400,7 @@ transferForm.addEventListener("submit", async (e) => {
    Logout
 ───────────────────────────────────────────── */
 document.getElementById("dash-logout-btn").addEventListener("click", () => {
-  window.location.href = "/login.html";
+  window.location.href = "/login";
 });
 
 /* ─────────────────────────────────────────────

@@ -66,8 +66,15 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (method === "GET" && !url.startsWith("/api/")) {
-    const safePath = url == "/" ? "/index.html" : url;
-    const filePath = path.join(__dirname, "..", safePath);
+    const cleanUrl = url.split("?")[0];
+
+    let safePath = cleanUrl === "/" ? "/index.html" : cleanUrl;
+    let filePath = path.join(__dirname, "..", safePath);
+
+    if (!path.extname(filePath)) {
+      filePath += ".html";
+    }
+
     const ext = path.extname(filePath);
     const mimeTypes = {
       ".html": "text/html",
