@@ -91,7 +91,7 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
-  if (url === "/api/auth/register" && method === "POST"){
+  if (url === "/api/auth/register" && method === "POST") {
     try {
       const body = await parseRequestBody(request);
       const { name, email, password } = body;
@@ -109,48 +109,24 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      // const hashedPassword = await bcrypt.hash(password, 10);
-      // const newUser = await db.createUser({
-      //   name,
-      //   email,
-      //   passwordHash: hashedPassword,
-      // });
-
-      // await db.createWallet({
-      //   userId: newUser.id,
-      //   balance: 0,
-      //   currency: "PKR",
-      // });
-      // const token = jwt.sign(
-      //   { accountNumber: newUser.account_number },
-      //   JWT_SECRET_KEY,
-      //   {
-      //     expiresIn: "10m",
-      //   },
-      // );
-
       const hashedPassword = await bcrypt.hash(password, 10);
-      
-      // 1. Create the user
+
       await db.createUser({
         name,
         email,
         passwordHash: hashedPassword,
       });
 
-      // 2. Fetch the newly created user record to guarantee we have the assigned account_number and ID
       const createdUser = await db.findUserByEmail(email);
 
-      // 3. Create the wallet using the fetched ID
       await db.createWallet({
         userId: createdUser.id,
         balance: 0,
         currency: "PKR",
       });
-      
-      // 4. Sign the token using the definitively retrieved account number
+
       const token = jwt.sign(
-        { accountNumber: createdUser.account_number },
+        { accountNumber: createdUser.account_number.replace("VV-", "") },
         JWT_SECRET_KEY,
         {
           expiresIn: "10m",
@@ -188,7 +164,9 @@ const server = http.createServer(async (request, response) => {
       }
 
       if (user.is_deleted) {
-        return sendResponse(response, 403, { error: "This account has been deleted." });
+        return sendResponse(response, 403, {
+          error: "This account has been deleted.",
+        });
       }
 
       const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -199,7 +177,7 @@ const server = http.createServer(async (request, response) => {
       const token = jwt.sign({ accountNumber }, JWT_SECRET_KEY, {
         expiresIn: "10m",
       });
-      const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`; // have to add a secure flag if/after plublishing it in a secure https site domain! also change sameSit from Lax to Strict
+      const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
       return sendResponse(
         response,
         200,
@@ -239,7 +217,9 @@ const server = http.createServer(async (request, response) => {
       }
 
       if (user.is_deleted) {
-        return sendResponse(response, 403, { error: "This account has been deleted." });
+        return sendResponse(response, 403, {
+          error: "This account has been deleted.",
+        });
       }
 
       const wallet = await db.findWalletByUserId(user.id);
@@ -268,7 +248,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- WALLET DEPOSIT ROUTE ---
-  if(url === "/api/wallet/deposit" && method === "POST") {
+  if (url === "/api/wallet/deposit" && method === "POST") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -293,7 +273,9 @@ const server = http.createServer(async (request, response) => {
       }
 
       if (user.is_deleted) {
-        return sendResponse(response, 403, { error: "This account has been deleted." });
+        return sendResponse(response, 403, {
+          error: "This account has been deleted.",
+        });
       }
 
       if (await db.isUserFrozen(user.id)) {
@@ -362,7 +344,9 @@ const server = http.createServer(async (request, response) => {
       }
 
       if (user.is_deleted) {
-        return sendResponse(response, 403, { error: "This account has been deleted." });
+        return sendResponse(response, 403, {
+          error: "This account has been deleted.",
+        });
       }
 
       if (await db.isUserFrozen(user.id)) {
@@ -409,7 +393,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- WALLET TRANSFER ROUTE ---
-  if(url === "/api/wallet/transfer" && method === "POST") {
+  if (url === "/api/wallet/transfer" && method === "POST") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -434,7 +418,9 @@ const server = http.createServer(async (request, response) => {
       }
 
       if (sender.is_deleted) {
-        return sendResponse(response, 403, { error: "This account has been deleted." });
+        return sendResponse(response, 403, {
+          error: "This account has been deleted.",
+        });
       }
 
       if (await db.isUserFrozen(sender.id)) {
@@ -462,7 +448,9 @@ const server = http.createServer(async (request, response) => {
       const recipientUser = await db.findUserByEmail(recipient);
       if (recipientUser) {
         if (recipientUser.is_deleted) {
-          return sendResponse(response, 400, { error: "Recipient account is no longer active." });
+          return sendResponse(response, 400, {
+            error: "Recipient account is no longer active.",
+          });
         }
         if (recipientUser.id === sender.id)
           return sendResponse(response, 400, {
@@ -501,7 +489,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   // --- TRANSACTION HISTORY ROUTE ---
- if (url === "/api/wallet/transactions" && method === "GET") {
+  if (url === "/api/wallet/transactions" && method === "GET") {
     try {
       const cookieHeader = request.headers.cookie || "";
       const tokenMatch = cookieHeader.match(/token=([^;]+)/);
@@ -537,7 +525,7 @@ const server = http.createServer(async (request, response) => {
     }
   }
 
- if (url === "/api/admin/login" && method === "POST") {
+  if (url === "/api/admin/login" && method === "POST") {
     try {
       const { password } = await parseRequestBody(request);
       if (!password) {

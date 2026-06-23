@@ -33,7 +33,7 @@ export async function findUserByEmail(email) {
 
 export async function findUserByAccNumber(accountNumber) {
   return queryOne("SELECT * FROM users WHERE account_number = $1", [
-    `VV-${accountNumber}`,
+    `${accountNumber}`,
   ]);
 }
 

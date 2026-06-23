@@ -50,13 +50,13 @@ const overlay = document.getElementById("panel-overlay");
 function openPanel(panelId) {
   closeAllPanels();
   const panel = document.getElementById(panelId);
-  if (panel) panel.classList.add("panel-open");
-  overlay.classList.add("overlay-visible");
+  if (panel) panel.classList.add("open");
+  overlay.classList.add("open");
 }
 
 function closeAllPanels() {
-  document.querySelectorAll(".panel").forEach((p) => p.classList.remove("panel-open"));
-  overlay.classList.remove("overlay-visible");
+  document.querySelectorAll(".panel").forEach((p) => p.classList.remove("open"));
+  overlay.classList.remove("open");
 }
 
 overlay.addEventListener("click", closeAllPanels);
@@ -124,25 +124,14 @@ async function loadProfile() {
 /* ─────────────────────────────────────────────
    Transactions
 ───────────────────────────────────────────── */
-function buildTxnItem(txn, userId) {
-  const isDebit =
-    (txn.transactionType === "TRANSFER" || txn.transactionType === "WITHDRAW") &&
-    txn.senderWalletId === (currentWallet ? currentWallet.id : null);
-
+function buildTxnItem(txn) {
   const isCredit =
     txn.transactionType === "DEPOSIT" ||
     (txn.transactionType === "TRANSFER" &&
-      txn.receiverWalletId === (currentWallet ? currentWallet.id : null));
-
-  let sign = "";
-  let amountClass = "";
-  if (isCredit) {
-    sign = "+";
-    amountClass = "txn-amount-credit";
-  } else {
-    sign = "-";
-    amountClass = "txn-amount-debit";
-  }
+      currentWallet &&
+      txn.receiverWalletId === currentWallet.id);
+  const sign = isCredit ? "+" : "-";
+  const amountClass = isCredit ? "txn-amount credit" : "txn-amount debit";
 
   let label = "";
   if (txn.transactionType === "DEPOSIT") {
@@ -160,11 +149,11 @@ function buildTxnItem(txn, userId) {
   const item = document.createElement("div");
   item.className = "txn-item";
   item.innerHTML = `
-    <div class="txn-item-left">
-      <p class="txn-label">${label}</p>
+    <div class="txn-meta">
+      <p class="txn-type">${label}</p>
       <p class="txn-date">${formatDate(txn.createTime)}</p>
     </div>
-    <p class="txn-amount ${amountClass}">${sign}${formatCurrency(txn.amount, txn.senderCurrency || txn.recvCurrency || "PKR")}</p>
+    <p class="${amountClass}">${sign}${formatCurrency(txn.amount, txn.senderCurrency || txn.recvCurrency || "PKR")}</p>
   `;
   return item;
 }
@@ -190,7 +179,7 @@ async function loadRecentTransactions() {
 
     container.innerHTML = "";
     transactions.slice(0, 5).forEach((txn) => {
-      container.appendChild(buildTxnItem(txn, currentUser.id));
+      container.appendChild(buildTxnItem(txn));
     });
   } catch (err) {
     container.innerHTML = `<p class="txn-empty">Could not load transactions.</p>`;
@@ -219,7 +208,7 @@ async function loadAllTransactions() {
 
     container.innerHTML = "";
     transactions.forEach((txn) => {
-      container.appendChild(buildTxnItem(txn, currentUser.id));
+      container.appendChild(buildTxnItem(txn));
     });
   } catch (err) {
     container.innerHTML = `<p class="txn-empty">Could not load transactions.</p>`;
@@ -298,7 +287,7 @@ withdrawInput.addEventListener("input", () => {
   const currency = currentWallet ? currentWallet.currency : "PKR";
   remainingBalanceSpan.textContent =
     remaining >= 0 ? formatCurrency(remaining, currency) : "Insufficient funds";
-  remainingBalanceSpan.style.color = remaining >= 0 ? "" : "var(--color-danger, #e53e3e)";
+  remainingBalanceSpan.style.color = remaining >= 0 ? "" : "var(--danger)";
 });
 
 withdrawForm.addEventListener("submit", async (e) => {
@@ -329,6 +318,7 @@ withdrawForm.addEventListener("submit", async (e) => {
       loadRecentTransactions();
       withdrawInput.value = "";
       remainingBalanceSpan.textContent = "—";
+      remainingBalanceSpan.style.color = "";
       showAlert("withdraw-alert", "Withdrawal successful!", false);
     } else {
       showAlert("withdraw-alert", data.error || "Withdrawal failed.");
@@ -355,7 +345,7 @@ transferAmountInput.addEventListener("input", () => {
   const currency = currentWallet ? currentWallet.currency : "PKR";
   transferRemainingSpan.textContent =
     remaining >= 0 ? formatCurrency(remaining, currency) : "Insufficient funds";
-  transferRemainingSpan.style.color = remaining >= 0 ? "" : "var(--color-danger, #e53e3e)";
+  transferRemainingSpan.style.color = remaining >= 0 ? "" : "var(--danger)";
 });
 
 transferForm.addEventListener("submit", async (e) => {
@@ -393,6 +383,7 @@ transferForm.addEventListener("submit", async (e) => {
       document.getElementById("transfer-recipient-input").value = "";
       transferAmountInput.value = "";
       transferRemainingSpan.textContent = "—";
+      transferRemainingSpan.style.color = "";
       showAlert("transfer-alert", "Transfer successful!", false);
     } else {
       showAlert("transfer-alert", data.error || "Transfer failed.");
@@ -408,16 +399,8 @@ transferForm.addEventListener("submit", async (e) => {
 /* ─────────────────────────────────────────────
    Logout
 ───────────────────────────────────────────── */
-document.getElementById("dash-logout-btn").addEventListener("click", async () => {
-  try {
-    // The server doesn't have a logout route that clears the cookie,
-    // so we redirect to login — the expired/missing token will block
-    // access to protected routes naturally.
-    // If a logout route is added later, call it here.
-    window.location.href = "/login.html";
-  } catch (err) {
-    window.location.href = "/login.html";
-  }
+document.getElementById("dash-logout-btn").addEventListener("click", () => {
+  window.location.href = "/login.html";
 });
 
 /* ─────────────────────────────────────────────
@@ -438,6 +421,7 @@ document.getElementById("close-deposit-panel").addEventListener("click", closeAl
 document.getElementById("withdraw-action-button").addEventListener("click", () => {
   hideAlert("withdraw-alert");
   remainingBalanceSpan.textContent = "—";
+  remainingBalanceSpan.style.color = "";
   openPanel("withdraw-panel");
 });
 document.getElementById("close-withdraw-panel").addEventListener("click", closeAllPanels);
@@ -445,6 +429,7 @@ document.getElementById("close-withdraw-panel").addEventListener("click", closeA
 document.getElementById("transfer-action-button").addEventListener("click", () => {
   hideAlert("transfer-alert");
   transferRemainingSpan.textContent = "—";
+  transferRemainingSpan.style.color = "";
   openPanel("transfer-panel");
 });
 document.getElementById("close-transfer-panel").addEventListener("click", closeAllPanels);
