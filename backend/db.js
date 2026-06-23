@@ -44,12 +44,60 @@ export async function createUser(userObject) {
 
 export async function seedAdmin(adminObject) {
   return queryOne(
-    "INSERT INTO users (name, email, password_hash, account_type) VALUES ($1, $2, $3, $4) RETURNING *",
+    "INSERT INTO users (name, email, password_hash, account_type) VALUES ($1, $2, $3, 'admin') RETURNING *",
+    [adminObject.name, adminObject.email, adminObject.passwordHash],
+  );
+}
+
+export async function getAllUsers() {
+  return query(`SELECT account_number AS "accountNumber", name, email, password_hash AS "passwordHash", account_type AS "accountType", is_frozen AS "isFrozen", create_time AS "creatTime", is_deleted AS "isDeleted"
+    FROM users`);
+}
+
+export async function deleteUser(userId) {
+  const rows = await query(`DELETE * FROM users WHERE id = $1`, [userId]);
+  return rows.length > 0;
+}
+
+export async function setUserFrozen(userId, frozen) {
+  const rows = await query(`UPDATE users SET is_frozen = $1 WHERE id = $2`, [
+    frozen,
+    userId,
+  ]);
+}
+
+export async function isUserFrozen(userId) {
+  const row = await queryOne(`SELECT is_frozen FROM users WHERE id = $1`, [
+    userId,
+  ]);
+  return row ? row.is_frozen : false;
+}
+
+export async function createWallet(walletObject) {
+  return queryOne(
+    `INSERT INTO wallets (user_id, balance, currency)
+    VALUES ($1, $2, $3) RETURNING *`,
+    [walletObject.userId, walletObject.balance, walletObject.currency],
+  );
+}
+
+export async function findWalletByUserId(userId) {
+  return queryOne(`SELECT * FROM wallets WHERE user_id = $1`, [userId]);
+}
+
+export async function findWalletById(walletId) {
+  return queryOne(`SELECT * FROM wallets WHERE id = $1`, [walletId]);
+}
+
+export async function recordTransaction(transaction) {
+  await queryOne(
+    `INSERT INTO transactions (sender_wallet_id, receiver_wallet_id, amount, transaction_type)
+      VALUES ($1, $2, $3, $4)`,
     [
-      adminObject.name,
-      adminObject.email,
-      adminObject.passwordHash,
-      adminObject.role,
+      transaction.senderWalletId,
+      transaction.receiverWalletId,
+      transaction.amount,
+      transaction.type,
     ],
   );
 }

@@ -8,9 +8,10 @@
   "name": "venn-vault",
   "description": "Venn-Vault is a full-stack online banking application with a heavy emphasis on core backend mechanics. Deliberately built without Express.js, this project was designed from the ground up to deeply explore routing, server architecture, and security layers using pure, vanilla Node.js rather than relying on framework magic.",
   "version": "1.0.0",
+  "type": "module",
   "main": "backend/server.js",
   "scripts": {
-    "test": "node --watch --env-file=backend/.env backend/server.js"
+    "test": "node --watch --env-file=.env backend/server.js"
   },
   "repository": {
     "type": "git",
