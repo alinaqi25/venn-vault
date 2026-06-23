@@ -126,7 +126,7 @@ const server = http.createServer(async (request, response) => {
       });
 
       const token = jwt.sign(
-        { accountNumber: createdUser.account_number.replace("VV-", "") },
+        { accountNumber: createdUser.account_number },
         JWT_SECRET_KEY,
         {
           expiresIn: "10m",
@@ -232,6 +232,7 @@ const server = http.createServer(async (request, response) => {
           email: user.email,
           role: user.account_type,
           dateCreated: user.create_time,
+          isFrozen: user.is_frozen,
         },
         wallet: wallet
           ? {

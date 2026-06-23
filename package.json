@@ -11,6 +11,7 @@
   "type": "module",
   "main": "backend/server.js",
   "scripts": {
+    "seedAdmin": "node --env-file=.env backend/seedAdmin.js",
     "test": "node --watch --env-file=.env backend/server.js"
   },
   "repository": {

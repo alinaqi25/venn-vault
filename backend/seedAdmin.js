@@ -3,19 +3,34 @@ import bcrypt from "bcrypt";
 import * as db from "./db.js";
 import crypto from "crypto";
 
-const hash = await bcrypt.hash("sUperSecureAdminPassword12334477443", 10);
+const adminEmail = "admin@vennvault.internal";
 
-const adminUser = await db.seedAdmin({
-  name: "Admin",
-  email: "admin@vennvault.internal",
-  passwordHash: hash,
-});
+try {
+  const existingAdmin = await db.findUserByEmail(adminEmail);
 
-await db.createWallet({
-  userId: adminUser.id,
-  balance: 0,
-  currency: "PKR",
-});
+  if (existingAdmin) {
+    console.log("Admin already seeded. Skipping...");
+    process.exit(0);
+  }
 
-console.log("Admin seeded.");
-process.exit(0);
+  const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+
+  const adminUser = await db.seedAdmin({
+    name: "Admin",
+    email: adminEmail,
+    passwordHash: hash,
+  });
+
+  await db.createWallet({
+    userId: adminUser.id,
+    balance: 0,
+    currency: "PKR",
+  });
+
+  console.log("Admin seeded successfully.");
+  process.exit(0);
+
+} catch (error) {
+  console.error("Error seeding admin:", error);
+  process.exit(1);
+}
