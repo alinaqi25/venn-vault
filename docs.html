@@ -73,20 +73,22 @@
       <section class="docs-section" id="intro">
         <h2>Introduction</h2>
         <p>
-          Venn-Vault is a full-stack online banking application with a deliberate
-          emphasis on backend mechanics. It was built to explore what actually happens
-          inside a web server — before Express abstracts it all away.
+          Venn-Vault is a full-stack banking API built in pure Node.js with no
+          framework. The goal was to understand what actually happens inside a web
+          server before reaching for abstractions like Express.
         </p>
         <p>
-          The result is a working banking API: user registration, login, deposits,
-          withdrawals, fund transfers, and an admin control panel — all implemented
-          from scratch in pure Node.js, backed by a PostgreSQL database.
+          It covers user registration and login, deposits, withdrawals, fund transfers,
+          transaction history, and an admin control panel. The backend is a single
+          Node.js process. The database is PostgreSQL. There are three npm packages:
+          <code>pg</code>, <code>bcrypt</code>, and <code>jsonwebtoken</code>.
         </p>
         <div class="callout">
           <p>
-            <strong>Note:</strong> Venn-Vault uses a "sandbox economy" for transactions.
-            Deposits and withdrawals accept arbitrary values without real payment
-            validation — this is intentional, to isolate and test the routing and database layers.
+            <strong>Note:</strong> Payment processing is intentionally out of scope.
+            The transaction layer accepts arbitrary amounts without real payment
+            validation so the focus stays on routing, database writes, and auth
+            correctness.
           </p>
         </div>
       </section>
@@ -95,16 +97,15 @@
       <section class="docs-section" id="why-vanilla">
         <h2>Why Vanilla Node?</h2>
         <p>
-          Most production Node.js apps reach for Express on day one. This project
-          was built to ask what Express is actually doing. The answer turns out to
-          be: quite a lot. By handling raw TCP streams, writing a custom body parser,
-          matching routes with a hand-rolled pattern matcher, and manually setting
-          response headers, you develop an understanding of the HTTP protocol that
-          framework usage tends to obscure.
+          I wanted to know what Express is actually doing. The answer is quite a lot:
+          body parsing, content negotiation, routing, error handling, response
+          helpers. By doing all of that manually, you stop treating those things as
+          magic and start treating them as solved problems you understand.
         </p>
         <p>
-          This is not an argument against frameworks — Express is excellent. It's an
-          argument for understanding what you're abstracting before you abstract it.
+          This isn't an argument against frameworks. Express is great and I'll use it
+          in the next project. But I'd rather know what I'm abstracting over before
+          I abstract over it.
         </p>
       </section>
 
@@ -112,10 +113,11 @@
       <section class="docs-section" id="tech-stack">
         <h2>Tech Stack</h2>
         <ul>
-          <li><strong>Runtime:</strong> Node.js — native <code>http</code>, <code>crypto</code>, <code>fs</code> modules</li>
+          <li><strong>Runtime:</strong> Node.js, native <code>http</code>, <code>fs</code>, <code>path</code>, <code>url</code> modules</li>
           <li><strong>Database:</strong> PostgreSQL via the <code>pg</code> client</li>
           <li><strong>Password Hashing:</strong> <code>bcrypt</code></li>
-          <li><strong>Authentication:</strong> <code>jsonwebtoken</code> — stateless JWT sessions</li>
+          <li><strong>Authentication:</strong> <code>jsonwebtoken</code>, stateless JWT sessions via HttpOnly cookies</li>
+          <li><strong>Config:</strong> <code>dotenv</code></li>
           <li><strong>Frontend:</strong> HTML, CSS, Vanilla JavaScript (no build step)</li>
         </ul>
       </section>
@@ -152,12 +154,13 @@ cd venn-vault</pre>
 
         <h3>3. Set up the PostgreSQL database</h3>
         <p>
-          Create a new database in PostgreSQL and run the included SQL schema file
-          to create the <code>users</code> and <code>transactions</code> tables.
+          Create a new database and run the schema file. This creates the
+          <code>users</code>, <code>wallets</code>, and <code>transactions</code> tables
+          along with indexes.
         </p>
         <div class="code-block">
-          <pre>psql -U your_postgres_user -c "CREATE DATABASE venn_vault_db;"
-psql -U your_postgres_user -d venn_vault_db -f schema.sql</pre>
+          <pre>psql -U your_postgres_user -c "CREATE DATABASE vennvault;"
+psql -U your_postgres_user -d vennvault -f schema.sql</pre>
         </div>
       </section>
 
@@ -166,19 +169,17 @@ psql -U your_postgres_user -d venn_vault_db -f schema.sql</pre>
         <h2>Environment Variables</h2>
         <p>
           Create a <code>.env</code> file in the project root. The server reads
-          these at startup — it will not start without them.
+          these at startup. It will not start without them.
         </p>
         <div class="code-block">
-          <pre>PORT=3000
-
-DB_USER=your_postgres_user
+          <pre>DB_USER=your_postgres_user
 DB_PASSWORD=your_postgres_password
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=venn_vault_db
+DB_NAME=vennvault
 
 JWT_SECRET=your_super_secret_jwt_key
-ADMIN_PASSWORD=your_admin_panel_password</pre>
+ALLOWED_ORIGIN=http://localhost:8080</pre>
         </div>
         <div class="callout callout-warn">
           <p>
@@ -196,10 +197,9 @@ ADMIN_PASSWORD=your_admin_panel_password</pre>
           <pre>npm start</pre>
         </div>
         <p>
-          The server starts on <code>http://localhost:3000</code> by default,
-          or whatever <code>PORT</code> you defined in <code>.env</code>.
-          The frontend is served statically from the same process — navigate
-          to the root URL to open the app.
+          The server starts on <code>http://localhost:8080</code>. The port is
+          hardcoded to 8080 in the server. Static files are served from the same
+          process, so navigating to the root URL opens the app directly.
         </p>
       </section>
 
@@ -207,25 +207,24 @@ ADMIN_PASSWORD=your_admin_panel_password</pre>
       <section class="docs-section" id="routing">
         <h2>Custom Router</h2>
         <p>
-          The router is a plain JavaScript object that maps
-          <code>METHOD /path</code> strings to handler functions. On each
-          incoming request, the server reads <code>req.method</code> and
-          <code>req.url</code>, strips query strings, and looks up the matching
-          handler. If none is found, a 404 is returned.
+          Routing is handled with a chain of if-blocks inside the
+          <code>http.createServer</code> callback. On each incoming request,
+          the server checks <code>request.method</code> and <code>request.url</code>
+          against each condition in order. If nothing matches, a 404 is returned.
+          Static files are served first for any non-<code>/api/</code> GET request,
+          falling back to appending <code>.html</code> for extension-less paths.
         </p>
         <p>
-          Dynamic segments (e.g. <code>/api/user/:id</code>) are matched with
-          a simple regex loop, and the extracted params are attached to the
-          request object before the handler is called.
+          Dynamic path segments (e.g. <code>/api/admin/users/:id/freeze</code>)
+          are matched by checking <code>url.startsWith()</code> and
+          <code>url.endsWith()</code>, then the ID is extracted by splitting
+          the URL on <code>/</code>.
         </p>
         <div class="code-block">
-          <pre>// Simplified view of the routing logic
-const routes = {
-  'GET /api/account':        accountHandler.getAccount,
-  'POST /api/deposit':       transactionHandler.deposit,
-  'POST /api/transfer':      transactionHandler.transfer,
-  'GET /api/transactions':   transactionHandler.history,
-};</pre>
+          <pre>// Simplified view of the routing approach
+if (url === '/api/auth/login' &amp;&amp; method === 'POST') { ... }
+if (url === '/api/wallet/deposit' &amp;&amp; method === 'POST') { ... }
+if (url.startsWith('/api/admin/users/') &amp;&amp; url.endsWith('/freeze') &amp;&amp; method === 'POST') { ... }</pre>
         </div>
       </section>
 
@@ -234,27 +233,29 @@ const routes = {
         <h2>Auth Flow</h2>
         <h3>Registration</h3>
         <p>
-          The user provides a name, email, and password. The server generates
-          a unique account number and wallet ID using <code>node:crypto</code>,
-          hashes the password with <code>bcrypt</code>, and inserts the record
-          into PostgreSQL.
+          The user provides a name, email, and password. The server hashes
+          the password with <code>bcrypt</code> at cost 10, inserts the user
+          record into PostgreSQL, then creates a linked wallet row with a
+          starting balance of 0 PKR. Account numbers are generated by the
+          database as a computed column. On success, the user is immediately
+          signed in and a JWT cookie is set.
         </p>
 
         <h3>Login</h3>
         <p>
-          The user provides their account number and password. The server
-          fetches the stored hash, runs <code>bcrypt.compare()</code>, and on
-          success signs a JWT containing the user's ID and account number. The
-          token is set as an <code>HttpOnly</code> cookie with the
-          <code>Secure</code> flag.
+          The user provides their account number and password. Soft-deleted accounts
+          are rejected first. Then the server fetches the hash and runs
+          <code>bcrypt.compare()</code>. On success, a JWT containing the account
+          number is signed and set as an <code>HttpOnly</code>,
+          <code>SameSite=Lax</code> cookie expiring in 10 minutes.
         </p>
 
         <h3>Protected Routes</h3>
         <p>
-          Every protected route passes through an <code>authMiddleware</code>
-          function that reads the cookie, verifies the JWT signature using the
-          secret key, and attaches the decoded payload to the request.
-          Requests with missing or invalid tokens receive a <code>401</code>.
+          Each protected route manually reads the <code>token</code> cookie from
+          the request headers, verifies the JWT signature against
+          <code>JWT_SECRET</code>, and looks up the user by account number.
+          Requests with a missing, expired, or invalid token get a <code>401</code>.
         </p>
       </section>
 
@@ -264,27 +265,40 @@ const routes = {
         <h3>users</h3>
         <div class="code-block">
           <pre>CREATE TABLE users (
-  id           SERIAL PRIMARY KEY,
-  name         VARCHAR(100) NOT NULL,
-  email        VARCHAR(100) UNIQUE NOT NULL,
-  password     TEXT NOT NULL,              -- bcrypt hash
-  account_no   VARCHAR(20) UNIQUE NOT NULL,
-  wallet_id    VARCHAR(20) UNIQUE NOT NULL,
-  balance      NUMERIC(12,2) DEFAULT 0.00,
-  status       VARCHAR(10) DEFAULT 'active', -- 'active' | 'frozen'
-  created_at   TIMESTAMPTZ DEFAULT NOW()
+  id             BIGSERIAL PRIMARY KEY,
+  account_seq_id SERIAL UNIQUE,
+  account_number VARCHAR(30) GENERATED ALWAYS AS
+                   ('VV-' || (1075102638 + account_seq_id)::TEXT) STORED UNIQUE,
+  name           VARCHAR(100) NOT NULL,
+  email          VARCHAR(255) UNIQUE NOT NULL,
+  password_hash  VARCHAR(255) NOT NULL,
+  account_type   VARCHAR(10) NOT NULL DEFAULT 'user', -- 'user' | 'admin'
+  is_frozen      BOOLEAN NOT NULL DEFAULT FALSE,
+  create_time    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_deleted     BOOLEAN NOT NULL DEFAULT FALSE -- soft delete
+);</pre>
+        </div>
+
+        <h3>wallets</h3>
+        <div class="code-block">
+          <pre>CREATE TABLE wallets (
+  id       BIGINT PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY
+             (START WITH 749201836),
+  user_id  BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  balance  NUMERIC(15,2) NOT NULL DEFAULT 0.00,
+  currency VARCHAR(10) NOT NULL DEFAULT 'PKR'
 );</pre>
         </div>
 
         <h3>transactions</h3>
         <div class="code-block">
           <pre>CREATE TABLE transactions (
-  id           SERIAL PRIMARY KEY,
-  user_id      INT REFERENCES users(id) ON DELETE CASCADE,
-  type         VARCHAR(20) NOT NULL, -- 'deposit' | 'withdrawal' | 'transfer'
-  amount       NUMERIC(12,2) NOT NULL,
-  note         TEXT,
-  created_at   TIMESTAMPTZ DEFAULT NOW()
+  id                 BIGSERIAL PRIMARY KEY,
+  sender_wallet_id   BIGINT REFERENCES wallets(id) ON DELETE SET NULL,
+  receiver_wallet_id BIGINT REFERENCES wallets(id) ON DELETE SET NULL,
+  amount             NUMERIC(15,2) NOT NULL,
+  transaction_type   VARCHAR(10) NOT NULL, -- 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER'
+  create_time        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );</pre>
         </div>
       </section>
@@ -293,8 +307,8 @@ const routes = {
       <section class="docs-section" id="api-auth">
         <h2>Auth Endpoints</h2>
 
-        <h3>POST /api/register</h3>
-        <p>Register a new user account.</p>
+        <h3>POST /api/auth/register</h3>
+        <p>Register a new user account. Also creates a linked PKR wallet and logs the user in immediately.</p>
         <div class="code-block">
           <pre>// Request body
 {
@@ -303,99 +317,113 @@ const routes = {
   "password": "supersecret"
 }
 
-// Response 201
+// Response 201 — sets HttpOnly cookie: token=&lt;jwt&gt;
 {
-  "message":    "Account created.",
-  "account_no": "VV-83920184",
-  "wallet_id":  "WLT-4A2F9C"
+  "success": true,
+  "message": "User registered and logged in successfully!"
 }</pre>
         </div>
 
-        <h3>POST /api/login</h3>
-        <p>Authenticate and receive a session cookie.</p>
+        <h3>POST /api/auth/login</h3>
+        <p>Authenticate with an account number and password.</p>
         <div class="code-block">
           <pre>// Request body
 {
-  "account_no": "VV-83920184",
-  "password":   "supersecret"
+  "accountNumber": "VV-1075102639",
+  "password":      "supersecret"
 }
 
 // Response 200 — sets HttpOnly cookie: token=&lt;jwt&gt;
-{ "message": "Login successful." }</pre>
+{ "success": true, "message": "Login successful!" }</pre>
         </div>
 
-        <h3>POST /api/logout</h3>
-        <p>Clears the session cookie. No body required.</p>
+        <h3>GET /api/auth/profile</h3>
+        <p>Returns the authenticated user's account details and linked wallet. Requires a valid session cookie.</p>
+        <div class="code-block">
+          <pre>// Response 200
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "accountNumber": "VV-1075102639",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "role": "user",
+    "dateCreated": "2026-05-01T10:00:00Z",
+    "isFrozen": false
+  },
+  "wallet": {
+    "id": 749201836,
+    "userId": 1,
+    "balance": "2500.00",
+    "currency": "PKR"
+  }
+}</pre>
+        </div>
       </section>
 
       <!-- API Account -->
       <section class="docs-section" id="api-account">
         <h2>Account Endpoints</h2>
 
-        <h3>GET /api/account</h3>
-        <p>Returns the authenticated user's account details and current balance.</p>
-        <div class="code-block">
-          <pre>// Response 200
-{
-  "name":       "Jane Doe",
-  "email":      "jane@example.com",
-  "account_no": "VV-83920184",
-  "wallet_id":  "WLT-4A2F9C",
-  "balance":    "2500.00",
-  "status":     "active",
-  "created_at": "2026-05-01T10:00:00Z"
-}</pre>
-        </div>
+        <p>Account details are returned by <code>GET /api/auth/profile</code>, documented above in the Auth Endpoints section.</p>
       </section>
 
       <!-- API Transactions -->
       <section class="docs-section" id="api-transactions">
         <h2>Transaction Endpoints</h2>
 
-        <h3>POST /api/deposit</h3>
+        <h3>POST /api/wallet/deposit</h3>
         <div class="code-block">
           <pre>// Request body
 { "amount": 500 }
 
 // Response 200
-{ "message": "Deposit successful.", "new_balance": "3000.00" }</pre>
+{ "success": true, "message": "Deposit processed successfully.", "newBalance": 3000 }</pre>
         </div>
 
-        <h3>POST /api/withdraw</h3>
+        <h3>POST /api/wallet/withdraw</h3>
         <div class="code-block">
           <pre>// Request body
 { "amount": 200 }
 
 // Response 200
-{ "message": "Withdrawal successful.", "new_balance": "2800.00" }</pre>
+{ "success": true, "message": "Withdrawal processed successfully.", "newBalance": 2800 }</pre>
         </div>
 
-        <h3>POST /api/transfer</h3>
+        <h3>POST /api/wallet/transfer</h3>
+        <p>Recipient can be an email address or a numeric wallet ID. Runs inside a PostgreSQL transaction with row-level locks.</p>
         <div class="code-block">
           <pre>// Request body
 {
-  "recipient": "recipient@example.com", // email OR wallet_id
+  "recipient": "recipient@example.com", // email OR wallet ID
   "amount": 150
 }
 
 // Response 200
-{ "message": "Transfer successful.", "new_balance": "2650.00" }</pre>
+{ "success": true, "message": "Transfer processed successfully.", "newBalance": 2650 }</pre>
         </div>
 
-        <h3>GET /api/transactions</h3>
-        <p>Returns a list of all transactions for the authenticated user, ordered by most recent.</p>
+        <h3>GET /api/wallet/transactions</h3>
+        <p>Returns all transactions for the authenticated user, ordered by most recent. Each row includes sender and receiver names and account numbers.</p>
         <div class="code-block">
           <pre>// Response 200
-[
-  {
-    "id": 12,
-    "type": "deposit",
-    "amount": "500.00",
-    "note": null,
-    "created_at": "2026-05-15T14:22:00Z"
-  },
-  ...
-]</pre>
+{
+  "success": true,
+  "transactions": [
+    {
+      "transactionId": 1,
+      "senderWalletId": null,
+      "receiverWalletId": 749201836,
+      "amount": "500.00",
+      "transactionType": "DEPOSIT",
+      "createTime": "2026-05-15T14:22:00Z",
+      "senderName": null,
+      "recvName": "Jane Doe",
+      "recvAccNumber": "VV-1075102639"
+    }
+  ]
+}</pre>
         </div>
       </section>
 
@@ -403,24 +431,32 @@ const routes = {
       <section class="docs-section" id="api-admin">
         <h2>Admin Endpoints</h2>
         <p>
-          All admin routes require the <code>X-Admin-Token</code> header, which
-          is validated server-side against the <code>ADMIN_PASSWORD</code> environment variable.
+          Admin login issues a separate <code>adminToken</code> JWT cookie (30 minute expiry).
+          All other admin routes verify this cookie and check that the token carries
+          <code>role: "admin"</code> before proceeding.
         </p>
 
+        <h3>POST /api/admin/login</h3>
+        <p>Authenticate as admin using the seeded admin account password.</p>
+        <div class="code-block">
+          <pre>// Request body
+{ "password": "your_admin_password" }
+
+// Response 200 — sets HttpOnly cookie: adminToken=&lt;jwt&gt;
+{ "success": true, "message": "Admin login successful." }</pre>
+        </div>
+
         <h3>GET /api/admin/users</h3>
-        <p>Returns all registered users with their balances and statuses.</p>
+        <p>Returns all non-admin users with their wallet balances and statuses.</p>
 
-        <h3>POST /api/admin/freeze/:id</h3>
-        <p>Sets the user's status to <code>frozen</code>. Frozen users cannot log in.</p>
+        <h3>GET /api/admin/users/:id/transactions</h3>
+        <p>Returns the full transaction history for a specific user by their database ID.</p>
 
-        <h3>POST /api/admin/unfreeze/:id</h3>
-        <p>Restores the user's status to <code>active</code>.</p>
+        <h3>POST /api/admin/users/:id/freeze</h3>
+        <p>Freeze or unfreeze a user account. Pass <code>{ "frozen": true }</code> to freeze, <code>{ "frozen": false }</code> to unfreeze. Frozen users cannot log in or perform transactions.</p>
 
-        <h3>DELETE /api/admin/user/:id</h3>
-        <p>Permanently deletes the user and all associated transaction records.</p>
-
-        <h3>GET /api/admin/transactions/:id</h3>
-        <p>Returns the full transaction history for a specific user by their ID.</p>
+        <h3>POST /api/admin/users/:id/delete</h3>
+        <p>Soft-deletes the user by setting <code>is_deleted = TRUE</code>. Transaction history is preserved. Deleted accounts cannot log in.</p>
       </section>
 
     </main>
