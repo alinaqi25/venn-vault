@@ -109,25 +109,54 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
+      // const hashedPassword = await bcrypt.hash(password, 10);
+      // const newUser = await db.createUser({
+      //   name,
+      //   email,
+      //   passwordHash: hashedPassword,
+      // });
+
+      // await db.createWallet({
+      //   userId: newUser.id,
+      //   balance: 0,
+      //   currency: "PKR",
+      // });
+      // const token = jwt.sign(
+      //   { accountNumber: newUser.account_number },
+      //   JWT_SECRET_KEY,
+      //   {
+      //     expiresIn: "10m",
+      //   },
+      // );
+
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = await db.createUser({
+      
+      // 1. Create the user
+      await db.createUser({
         name,
         email,
         passwordHash: hashedPassword,
       });
 
+      // 2. Fetch the newly created user record to guarantee we have the assigned account_number and ID
+      const createdUser = await db.findUserByEmail(email);
+
+      // 3. Create the wallet using the fetched ID
       await db.createWallet({
-        userId: newUser.id,
+        userId: createdUser.id,
         balance: 0,
         currency: "PKR",
       });
+      
+      // 4. Sign the token using the definitively retrieved account number
       const token = jwt.sign(
-        { accountNumber: newUser.account_number },
+        { accountNumber: createdUser.account_number },
         JWT_SECRET_KEY,
         {
           expiresIn: "10m",
         },
       );
+
       const cookieConfig = `token=${token}; HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
 
       return sendResponse(
