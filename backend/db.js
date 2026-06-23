@@ -66,6 +66,7 @@ export async function setUserFrozen(userId, frozen) {
     frozen,
     userId,
   ]);
+  return rows.length > 0
 }
 
 export async function isUserFrozen(userId) {
@@ -166,22 +167,22 @@ export async function executeTransfer(
   }
 }
 
-export async function getUserTransactions(userId, walletId) {
+export async function getUserTransactions(userId) {
   return query(
     `
     SELECT
-      t.id AS transactionId,
-      t.sender_wallet_id,
-      t.receiver_wallet_id,
+      t.id AS "transactionId",
+      t.sender_wallet_id AS "senderWalletId",
+      t.receiver_wallet_id AS "receiverWalletId",
       t.amount,
-      t.transaction_type,
-      t.create_time,
-      senderWallet.currency AS senderCurrency,
-      recvWallet.currency AS recvCurrency,
-      sender.account_number AS senderAccNumber,
-      sender.name AS senderName,
-      recv.account_number AS recvAccNumber,
-      recv.name AS recvName
+      t.transaction_type AS "transactionType",
+      t.create_time AS "createTime",
+      senderWallet.currency AS "senderCurrency",
+      recvWallet.currency AS "recvCurrency",
+      sender.account_number AS "senderAccNumber",
+      sender.name AS "senderName",
+      recv.account_number AS "recvAccNumber",
+      recv.name AS "recvName"
       FROM transactions t
       LEFT JOIN wallets senderWallet
       ON t.sender_wallet_id = senderWallet.id
@@ -191,10 +192,11 @@ export async function getUserTransactions(userId, walletId) {
       ON senderWallet.user_id = sender.id
       LEFT JOIN users recv
       ON recvWallet.user_id = recv.id
-        WHERE (t.sender_wallet_id = $2 AND senderWallet.user_id = $1)
-              OR (t.receiver_wallet_id = $2 AND recvWallet.user_id = $1)
+      WHERE senderWallet.user_id = $1
+         OR recvWallet.user_id = $1
       ORDER BY t.create_time DESC
       `,
-    [userId, walletId],
+    [userId],
   );
 }
+ 

@@ -40,10 +40,10 @@ async function parseRequestBody(request) {
 function sendResponse(response, statusCode, payload, extraHeaders = {}) {
   response.writeHead(statusCode, {
     "Content-Type": "application/json",
-    "Access-Control-Allowed-Origin": ALLOWED_ORIGIN, // ft
-    "Access-Control-Allowed-Headers": "Content-Type",
-    "Access-Control-Allowed-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allowed-Credentials": "true",
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN, // ft
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Credentials": "true",
     ...extraHeaders,
   });
   response.end(JSON.stringify(payload));
@@ -113,16 +113,16 @@ const server = http.createServer(async (request, response) => {
       const newUser = await db.createUser({
         name,
         email,
-        password_hash: hashedPassword,
+        passwordHash: hashedPassword,
       });
 
       await db.createWallet({
-        user_id: newUser.id,
+        userId: newUser.id,
         balance: 0,
         currency: "PKR",
       });
       const token = jwt.sign(
-        { accountNumber: newUser.accountNumber },
+        { accountNumber: newUser.account_number },
         JWT_SECRET_KEY,
         {
           expiresIn: "10m",
@@ -140,6 +140,7 @@ const server = http.createServer(async (request, response) => {
         { "Set-Cookie": cookieConfig },
       );
     } catch (error) {
+      console.log(error);
       return sendResponse(response, 500, { error: "Internal Server Error" });
     }
   }
@@ -152,7 +153,7 @@ const server = http.createServer(async (request, response) => {
           error: "Missing account number or password",
         });
       }
-      let user; // previously "const user = db.findUserByAccNumber(accountNumber) which returns a user object if exists"
+      const user = await db.findUserByAccNumber(accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User does not exist." });
       }
@@ -199,32 +200,30 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      let user; // originally this was: const user = db.findUserByAccNumber(decoded.accountNumber);
+      let user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
-      // const wallet = db.findWalletByUserId(user.id);
-
+      const wallet = await db.findWalletByUserId(user.id);
       return sendResponse(response, 200, {
         success: true,
-        /*           user: {
-            id: user.id,
-            accountNumber: user.accountNumber,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            dateCreated: user.dateCreated,
-          },
-          wallet: wallet
-            ? {
-                id: wallet.id,
-                user_id: user.id,
-                balance: wallet.balance,
-                currency: wallet.currency,
-              }
-            : null,
- */
+        user: {
+          id: user.id,
+          accountNumber: user.account_number,
+          name: user.name,
+          email: user.email,
+          role: user.account_type,
+          dateCreated: user.create_time,
+        },
+        wallet: wallet
+          ? {
+              id: wallet.id,
+              userId: user.id,
+              balance: wallet.balance,
+              currency: wallet.currency,
+            }
+          : null,
       });
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal server error" });
@@ -251,12 +250,12 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      const user = db.findUserByAccNumber(decoded.accountNumber);
+      const user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
-      if (db.isUserFrozen(user.id)) {
+      if (await db.isUserFrozen(user.id)) {
         return sendResponse(response, 403, {
           error: "Your account has been frozen. Please contact support.",
         });
@@ -269,25 +268,27 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      const wallet = db.findWalletByUserId(user.id);
+      const wallet = await db.findWalletByUserId(user.id);
       if (!wallet) {
         return sendResponse(response, 404, { error: "Wallet not found." });
       }
 
-      wallet.balance += amount;
+      await db.updateWalletBalance(
+        wallet.id,
+        parseFloat(wallet.balance) + parseFloat(amount),
+      );
 
-      db.recordTransaction({
-        id: crypto.randomUUID(),
-        userId: user.id,
-        type: "Deposit",
+      await db.recordTransaction({
+        senderWalletId: null,
+        receiverWalletId: wallet.id,
         amount: amount,
-        timestamp: Date.now(),
+        type: "DEPOSIT",
       });
 
       return sendResponse(response, 200, {
         success: true,
         message: "Deposit processed successfully.",
-        newBalance: wallet.balance,
+        newBalance: parseFloat(wallet.balance) + parseFloat(amount),
       });
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal server error" });
@@ -314,12 +315,12 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      const user = db.findUserByAccNumber(decoded.accountNumber);
+      const user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
-      if (db.isUserFrozen(user.id)) {
+      if (await db.isUserFrozen(user.id)) {
         return sendResponse(response, 403, {
           error: "Your account has been frozen. Please contact support.",
         });
@@ -332,29 +333,30 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      const wallet = db.findWalletByUserId(user.id);
+      const wallet = await db.findWalletByUserId(user.id);
       if (!wallet) {
         return sendResponse(response, 404, { error: "Wallet not found." });
       }
 
-      if (wallet.balance < amount) {
+      if (parseFloat(wallet.balance) < parseFloat(amount)) {
         return sendResponse(response, 400, { error: "Insufficient funds." });
       }
+      await db.updateWalletBalance(
+        wallet.id,
+        parseFloat(wallet.balance) - parseFloat(amount),
+      );
 
-      wallet.balance -= amount;
-
-      db.recordTransaction({
-        id: crypto.randomUUID(),
-        userId: user.id,
-        type: "Withdrawal",
+      await db.recordTransaction({
+        senderWalletId: wallet.id,
+        receiverWalletId: null,
         amount: amount,
-        timestamp: Date.now(),
+        type: "WITHDRAW",
       });
 
       return sendResponse(response, 200, {
         success: true,
         message: "Withdrawal processed successfully.",
-        newBalance: wallet.balance,
+        newBalance: parseFloat(wallet.balance) - parseFloat(amount),
       });
     } catch (error) {
       return sendResponse(response, 500, { error: "Internal server error" });
@@ -381,12 +383,12 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      const sender = db.findUserByAccNumber(decoded.accountNumber);
+      const sender = await db.findUserByAccNumber(decoded.accountNumber);
       if (!sender) {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
-      if (db.isUserFrozen(sender.id)) {
+      if (await db.isUserFrozen(sender.id)) {
         return sendResponse(response, 403, {
           error: "Your account has been frozen. Please contact support.",
         });
@@ -405,39 +407,35 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      let recipientUserId = null;
+      const senderWallet = await db.findWalletByUserId(sender.id);
+      let recipientWalletId = null;
 
-      // try searching recipient by email
-      const recipientUser = db.findUserByEmail(recipient);
+      const recipientUser = await db.findUserByEmail(recipient);
       if (recipientUser) {
-        recipientUserId = recipientUser.id;
+        if (recipientUser.id === sender.id)
+          return sendResponse(response, 400, {
+            error: "Cannot transfer to yourself.",
+          });
+        const rWallet = await db.findWalletByUserId(recipientUser.id);
+        if (rWallet) recipientWalletId = rWallet.id;
       } else {
-        // else try searching  by wallet id
-        const recipientWallet = db.findWalletById(recipient);
-        if (recipientWallet) {
-          recipientUserId = recipientWallet.user_id;
-        }
+        const rWallet = await db.findWalletById(recipient);
+        if (rWallet) recipientWalletId = rWallet.id;
       }
 
-      if (!recipientUserId) {
+      if (!recipientWalletId) {
         return sendResponse(response, 404, {
           error: "Recipient not found. Please check the email or Wallet ID.",
         });
       }
 
-      if (recipientUserId === sender.id) {
-        return sendResponse(response, 400, {
-          error: "Cannot transfer to yourself.",
-        });
-      }
-
       try {
-        db.executeTransfer(sender.id, recipientUserId, amount);
+        await db.executeTransfer(senderWallet.id, recipientWalletId, amount);
       } catch (err) {
         return sendResponse(response, 400, { error: err.message });
       }
 
-      const updatedSenderWallet = db.findWalletByUserId(sender.id);
+      const updatedSenderWallet = await db.findWalletByUserId(sender.id);
 
       return sendResponse(response, 200, {
         success: true,
@@ -470,12 +468,12 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      const user = db.findUserByAccNumber(decoded.accountNumber);
+      const user = await db.findUserByAccNumber(decoded.accountNumber);
       if (!user) {
         return sendResponse(response, 404, { error: "User not found." });
       }
 
-      const history = db.getUserTransactions(user.id);
+      const history = await db.getUserTransactions(user.id);
 
       return sendResponse(response, 200, {
         success: true,
@@ -494,11 +492,10 @@ const server = http.createServer(async (request, response) => {
         return sendResponse(response, 400, { error: "Password required." });
       }
 
-      const adminUser = db.findUserByEmail("admin@neopay.internal");
+      const adminUser = await db.findUserByEmail("admin@vennvault.internal");
       if (!adminUser) {
         return sendResponse(response, 500, { error: "Admin not configured." });
       }
-
       const isMatch = await bcrypt.compare(password, adminUser.password_hash);
       if (!isMatch) {
         return sendResponse(response, 401, {
@@ -507,7 +504,7 @@ const server = http.createServer(async (request, response) => {
       }
 
       const token = jwt.sign(
-        { accountNumber: adminUser.accountNumber, role: "admin" },
+        { accountNumber: adminUser.account_number, role: "admin" },
         JWT_SECRET_KEY,
         { expiresIn: "30m" },
       );
@@ -541,15 +538,19 @@ const server = http.createServer(async (request, response) => {
     const admin = verifyAdminToken(request);
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
-    const users = db.getAllUsers().filter((u) => u.role !== "admin");
-    const usersWithBalance = users.map((u) => {
-      const wallet = db.findWalletByUserId(u.id);
-      return {
-        ...u,
-        balance: wallet ? wallet.balance : 0,
-        currency: wallet ? wallet.currency : "PKR",
-      };
-    });
+    const users = await db.getAllUsers();
+    const filteredUsers = users.filter((u) => u.accountType !== "admin");
+
+    const usersWithBalance = await Promise.all(
+      filteredUsers.map(async (u) => {
+        const wallet = await db.findWalletByUserId(u.id);
+        return {
+          ...u,
+          balance: wallet ? wallet.balance : 0,
+          currency: wallet ? wallet.currency : "PKR",
+        };
+      }),
+    );
     return sendResponse(response, 200, {
       success: true,
       users: usersWithBalance,
@@ -565,7 +566,7 @@ const server = http.createServer(async (request, response) => {
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
     const userId = url.split("/")[3];
-    const transactions = db.getUserTransactions(userId);
+    const transactions = await db.getUserTransactions(userId);
     return sendResponse(response, 200, { success: true, transactions });
   }
 
@@ -578,7 +579,7 @@ const server = http.createServer(async (request, response) => {
     if (!admin) return sendResponse(response, 401, { error: "Unauthorized." });
 
     const userId = url.split("/")[3];
-    const deleted = db.deleteUser(userId);
+    const deleted = await db.deleteUser(userId);
     if (!deleted)
       return sendResponse(response, 404, { error: "User not found." });
     return sendResponse(response, 200, {
@@ -597,7 +598,7 @@ const server = http.createServer(async (request, response) => {
 
     const userId = url.split("/")[3];
     const { frozen } = await parseRequestBody(request);
-    const result = db.setUserFrozen(userId, !!frozen);
+    const result = await db.setUserFrozen(userId, !!frozen);
     if (!result)
       return sendResponse(response, 404, { error: "User not found." });
     return sendResponse(response, 200, {
