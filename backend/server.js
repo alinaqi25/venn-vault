@@ -3,12 +3,16 @@
 import http, { request } from "http";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-// import * as db from "./mockDB.js";
+import "dotenv/config";
+import * as db from "./db.js";
 import crypto from "crypto";
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "http://localhost:8080";
+const JWT_SECRET_KEY = process.env.JWT_SECRET;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -98,7 +102,7 @@ const server = http.createServer(async (request, response) => {
         });
       }
 
-      let userExists; // first it was const userExists = db.findUserByEmail(email)
+      const userExists = await db.findUserByEmail(email);
       if (userExists) {
         return sendResponse(response, 409, {
           error: "Email already registered",
@@ -106,24 +110,17 @@ const server = http.createServer(async (request, response) => {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      /* const newUser = {
-         id: crypto.randomUUID(),
-          accountNumber: db.generateNextAccountNumber(),
-          name,
-          email,
-          password_hash: hashedPassword,
-          role: "user",
-          dateCreated: Date.now(),
-        };
-        db.createUser(newUser);
-  
-        db.createWallet({
-          id: crypto.randomUUID(),
-          user_id: newUser.id,
-          balance: 0,
-          currency: "PKR",
-        });
-   */
+      const newUser = await db.createUser({
+        name,
+        email,
+        password_hash: hashedPassword,
+      });
+
+      await db.createWallet({
+        user_id: newUser.id,
+        balance: 0,
+        currency: "PKR",
+      });
       const token = jwt.sign(
         { accountNumber: newUser.accountNumber },
         JWT_SECRET_KEY,

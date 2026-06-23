@@ -1,3 +1,5 @@
+//DB.JS
+
 import pg from "pg";
 const { Pool } = pg;
 
@@ -55,12 +57,12 @@ export async function getAllUsers() {
 }
 
 export async function deleteUser(userId) {
-  const rows = await query(`DELETE * FROM users WHERE id = $1`, [userId]);
+  const rows = await query(`DELETE FROM users WHERE id = $1 RETURNING id`, [userId]);
   return rows.length > 0;
 }
 
 export async function setUserFrozen(userId, frozen) {
-  const rows = await query(`UPDATE users SET is_frozen = $1 WHERE id = $2`, [
+  const rows = await query(`UPDATE users SET is_frozen = $1 WHERE id = $2 RETURNING id`, [
     frozen,
     userId,
   ]);
