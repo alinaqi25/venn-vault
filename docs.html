@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Docs — Venn-Vault</title>
+  <title>Docs - Venn-Vault</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,6 +13,7 @@
   <nav class="navbar" aria-label="Main Navigation">
     <a href="/" class="nav-logo">
       <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+      <p class="logo-text">Venn-Vault</p>
     </a>
     <ul class="nav-links">
       <li><a href="/">Home</a></li>
@@ -317,7 +318,7 @@ if (url.startsWith('/api/admin/users/') &amp;&amp; url.endsWith('/freeze') &amp;
   "password": "supersecret"
 }
 
-// Response 201 — sets HttpOnly cookie: token=&lt;jwt&gt;
+// Response 201  sets HttpOnly cookie: token=&lt;jwt&gt;
 {
   "success": true,
   "message": "User registered and logged in successfully!"
@@ -333,7 +334,7 @@ if (url.startsWith('/api/admin/users/') &amp;&amp; url.endsWith('/freeze') &amp;
   "password":      "supersecret"
 }
 
-// Response 200 — sets HttpOnly cookie: token=&lt;jwt&gt;
+// Response 200  sets HttpOnly cookie: token=&lt;jwt&gt;
 { "success": true, "message": "Login successful!" }</pre>
         </div>
 
@@ -442,7 +443,7 @@ if (url.startsWith('/api/admin/users/') &amp;&amp; url.endsWith('/freeze') &amp;
           <pre>// Request body
 { "password": "your_admin_password" }
 
-// Response 200 — sets HttpOnly cookie: adminToken=&lt;jwt&gt;
+// Response 200  sets HttpOnly cookie: adminToken=&lt;jwt&gt;
 { "success": true, "message": "Admin login successful." }</pre>
         </div>
 

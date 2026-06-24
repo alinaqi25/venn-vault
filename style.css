@@ -85,8 +85,20 @@ img { display: block; max-width: 100%; }
   border-bottom: 1px solid rgba(138, 155, 178, 0.12);
 }
 
+.nav-logo{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 .nav-logo img {
   height: 36px;
+}
+
+.logo-text{
+  font-weight: bold;
+  font-size: 20px;
+  margin-left: 10px;
 }
 
 .nav-links {

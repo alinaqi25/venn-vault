@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Venn-Vault</title>
+  <title>Dashboard - Venn-Vault</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -13,6 +13,7 @@
   <nav class="navbar" aria-label="Main Navigation">
     <a href="/" class="nav-logo">
       <img src="venn-vault-logo.png" alt="Venn Vault" height="36">
+      <p class="logo-text">Venn-Vault</p>
     </a>
     <ul class="nav-links"></ul>
     <div class="nav-actions">
@@ -36,8 +37,8 @@
     <div class="balance-card">
       <div>
         <p class="balance-label">Current Balance</p>
-        <p class="balance-amount" id="dashboard-user-balance">—</p>
-        <p class="balance-acct" id="dashboard-acct-display">Account No. —</p>
+        <p class="balance-amount" id="dashboard-user-balance">-</p>
+        <p class="balance-acct" id="dashboard-acct-display">Account No. -</p>
       </div>
       <div style="text-align: right;">
         <p class="balance-label">Status</p>
@@ -91,27 +92,27 @@
     <div style="display: flex; flex-direction: column; gap: 0;">
       <div class="modal-row">
         <span class="modal-row-label">Name</span>
-        <span class="modal-row-value" id="info-name">—</span>
+        <span class="modal-row-value" id="info-name">-</span>
       </div>
       <div class="modal-row">
         <span class="modal-row-label">Account No.</span>
-        <span class="modal-row-value mono" id="info-account-number">—</span>
+        <span class="modal-row-value mono" id="info-account-number">-</span>
       </div>
       <div class="modal-row">
         <span class="modal-row-label">Email</span>
-        <span class="modal-row-value" id="info-email">—</span>
+        <span class="modal-row-value" id="info-email">-</span>
       </div>
       <div class="modal-row">
         <span class="modal-row-label">Wallet ID</span>
-        <span class="modal-row-value mono" id="info-wallet-id">—</span>
+        <span class="modal-row-value mono" id="info-wallet-id">-</span>
       </div>
       <div class="modal-row">
         <span class="modal-row-label">Balance</span>
-        <span class="modal-row-value" id="info-balance">—</span>
+        <span class="modal-row-value" id="info-balance">-</span>
       </div>
       <div class="modal-row">
         <span class="modal-row-label">Member Since</span>
-        <span class="modal-row-value" id="info-date">—</span>
+        <span class="modal-row-value" id="info-date">-</span>
       </div>
     </div>
   </aside>
@@ -143,7 +144,7 @@
       <div class="form-group">
         <label class="form-label" for="withdraw-input">Amount</label>
         <input class="form-input" type="number" id="withdraw-input" placeholder="0.00" min="0.01" step="0.01" required>
-        <span class="panel-hint">Balance after: <span id="remaining-balance">—</span></span>
+        <span class="panel-hint">Balance after: <span id="remaining-balance">-</span></span>
       </div>
       <button class="btn btn-primary btn-full" type="submit" id="withdraw-submit">Withdraw</button>
     </form>
@@ -164,7 +165,7 @@
       <div class="form-group">
         <label class="form-label" for="transfer-amount-input">Amount</label>
         <input class="form-input" type="number" id="transfer-amount-input" placeholder="0.00" min="0.01" step="0.01" required>
-        <span class="panel-hint">Balance after: <span id="transfer-remaining-balance">—</span></span>
+        <span class="panel-hint">Balance after: <span id="transfer-remaining-balance">-</span></span>
       </div>
       <button class="btn btn-primary btn-full" type="submit" id="transfer-submit">Transfer</button>
     </form>
