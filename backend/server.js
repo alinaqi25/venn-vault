@@ -663,5 +663,3 @@ const server = http.createServer(async (request, response) => {
 server.listen(PORT, () => {
   console.log(`Listening at ${PORT}...`);
 });
-
-export default serverHandler;
