@@ -12,7 +12,8 @@
   "main": "backend/server.js",
   "scripts": {
     "seedAdmin": "node --env-file=.env backend/seedAdmin.js",
-    "test": "node --watch --env-file=.env backend/server.js"
+    "test": "node --watch --env-file=.env backend/server.js",
+    "testLinux": "dotenv -e .env -- node --watch backend/server.js"
   },
   "repository": {
     "type": "git",
@@ -23,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/alinaqi25/venn-vault/issues"
   },
-  "homepage": "https://github.com/alinaqi25/venn-vault#readme"
+  "homepage": "https://github.com/alinaqi25/venn-vault#readme",
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0"
+  }
 }

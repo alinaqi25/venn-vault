@@ -32,12 +32,12 @@
       Vanilla Node.js &nbsp;·&nbsp; PostgreSQL &nbsp;·&nbsp; JWT Auth
     </span>
 
-    <h1>Banking infrastructure,<br><em>built from scratch.</em></h1>
+    <h1>I wanted to know what<br><em>Express actually does.</em></h1>
 
     <p class="hero-sub">
-      Venn-Vault is a full-stack banking API written in pure Node.js —
-      no Express, no shortcuts. Custom routing, raw HTTP, bcrypt, JWTs,
-      and a PostgreSQL ledger under the hood.
+      So I built a full-stack banking API without it. Custom HTTP routing,
+      raw body parsing, bcrypt auth, stateless JWTs, and a relational
+      PostgreSQL ledger, written from scratch in pure Node.js.
     </p>
 
     <div class="hero-actions">
@@ -52,78 +52,79 @@
     <span class="stack-item"><span class="stack-dot"></span>PostgreSQL</span>
     <span class="stack-item"><span class="stack-dot"></span>bcrypt</span>
     <span class="stack-item"><span class="stack-dot"></span>JSON Web Tokens</span>
-    <span class="stack-item"><span class="stack-dot"></span>node:crypto</span>
-    <span class="stack-item"><span class="stack-dot"></span>HTTP-only Cookies</span>
+    <span class="stack-item"><span class="stack-dot"></span>HttpOnly Cookies</span>
+    <span class="stack-item"><span class="stack-dot"></span>dotenv</span>
   </div>
 
   <!-- ── Highlights ── -->
   <section class="section">
     <div class="section-header">
-      <h2>Built to understand, not just ship.</h2>
+      <h2>Why build a bank?</h2>
       <p>
-        Every layer of this project was written intentionally — to strip away
-        the abstractions and understand what's actually happening inside a
-        web server.
+        I wanted a project that forced me to think about routing, auth, database
+        design, and concurrency all at once. Banking does that. Every feature has
+        real stakes: a transfer that partially succeeds is worse than one that fails cleanly.
       </p>
     </div>
 
     <div class="highlights-grid">
       <div class="highlight-card">
         <div class="highlight-icon">⚙</div>
-        <h3>Zero-Framework Architecture</h3>
+        <h3>No Framework</h3>
         <p>
-          No Express. Routing, request parsing, and response handling are
-          implemented directly on Node's native <code>http</code> module —
-          every byte is accounted for.
+          Routing, body parsing, and response headers are all handled on Node's
+          native <code>http</code> module. Writing this without Express taught me
+          what Express is actually solving, which makes me better at using it.
         </p>
       </div>
 
       <div class="highlight-card">
         <div class="highlight-icon">🔒</div>
-        <h3>Airtight Security Model</h3>
+        <h3>Auth Done Right</h3>
         <p>
-          Passwords hashed with <code>bcrypt</code>, sessions managed via
-          stateless JWTs, and secure HTTP-only cookies. Auth that would hold
-          up in production.
+          Passwords hashed with <code>bcrypt</code> at cost 10, sessions via
+          stateless JWTs in HttpOnly cookies. Tokens stay out of JavaScript
+          entirely. Frozen and soft-deleted accounts are rejected at every protected route.
         </p>
       </div>
 
       <div class="highlight-card">
         <div class="highlight-icon">🗄</div>
-        <h3>Relational Database Layer</h3>
+        <h3>Three-Table Schema</h3>
         <p>
-          Persistent user accounts and a proper transaction ledger backed by
-          PostgreSQL. Real schemas, real queries, no ORM magic.
+          Users, wallets, and transactions are separate tables with proper
+          foreign keys and constraints. Balances live on wallets, not users.
+          No ORM, just parameterized SQL queries.
         </p>
       </div>
 
       <div class="highlight-card">
         <div class="highlight-icon">💳</div>
-        <h3>Core Banking Operations</h3>
+        <h3>Atomic Transfers</h3>
         <p>
-          Full deposit, withdrawal, and fund transfer flows — all routed
-          through the custom parser and hitting the database on every
-          transaction.
+          Fund transfers run inside a PostgreSQL transaction with
+          <code>FOR UPDATE</code> row locks. Either both sides commit
+          or neither does. No partial state, no race conditions.
         </p>
       </div>
 
       <div class="highlight-card">
         <div class="highlight-icon">🛡</div>
-        <h3>Admin Control Panel</h3>
+        <h3>Separate Admin Identity</h3>
         <p>
-          A separate admin interface for viewing all accounts, freezing or
-          deleting users, and inspecting any transaction history in the
-          system.
+          The admin panel has its own login flow and its own JWT cookie,
+          separate from user sessions. Admin routes check both the token
+          signature and the role claim before doing anything.
         </p>
       </div>
 
       <div class="highlight-card">
         <div class="highlight-icon">🧪</div>
-        <h3>Sandbox Economy</h3>
+        <h3>Isolated Transaction Layer</h3>
         <p>
-          Deposits and withdrawals intentionally allow unlimited dummy inputs,
-          so you can stress-test the routing and database layers without
-          worrying about fake balances.
+          Payment processing is intentionally out of scope. The focus is the
+          routing, the database writes, and the auth layer. You can deposit
+          any amount and the ledger behaves correctly, which is the point.
         </p>
       </div>
     </div>
@@ -133,11 +134,11 @@
   <div class="section" style="padding-top: 0;">
     <div class="cta-band">
       <div>
-        <h2>Read the implementation docs.</h2>
-        <p>Architecture decisions, setup guide, environment variables, and API endpoints — all documented.</p>
+        <h2>Want to see how it's built?</h2>
+        <p>The docs cover the architecture decisions, database schema, auth flow, and every API endpoint with request and response shapes.</p>
       </div>
       <div style="display: flex; gap: 0.75rem; flex-shrink: 0; flex-wrap: wrap;">
-        <a href="/docs" class="btn btn-primary">Go to Docs</a>
+        <a href="/docs" class="btn btn-primary">Read the Docs</a>
         <a href="https://github.com/alinaqi25/venn-vault" target="_blank" rel="noopener" class="btn btn-ghost">GitHub ↗</a>
       </div>
     </div>

@@ -3,6 +3,11 @@ import bcrypt from "bcrypt";
 import * as db from "./db.js";
 import crypto from "crypto";
 
+if (!process.env.ADMIN_PASSWORD) {
+  console.error("CRITICAL ERROR: ADMIN_PASSWORD environment variable is missing.");
+  process.exit(1); 
+}
+
 const adminEmail = "admin@vennvault.internal";
 
 try {

@@ -171,7 +171,6 @@ ADMIN_PASSWORD=your_admin_password
 ALLOWED_ORIGIN=http://localhost:8080
 ```
 
-For Railway or other hosted Postgres, use `DATABASE_URL` instead.
 
 ### Database Setup
 
