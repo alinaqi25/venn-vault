@@ -664,4 +664,4 @@ server.listen(PORT, () => {
   console.log(`Listening at ${PORT}...`);
 });
 
-module.exports = serverHandler;
+export default serverHandler;
