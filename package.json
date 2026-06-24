@@ -13,7 +13,8 @@
   "scripts": {
     "seedAdmin": "node --env-file=.env backend/seedAdmin.js",
     "test": "node --watch --env-file=.env backend/server.js",
-    "testLinux": "dotenv -e .env -- node --watch backend/server.js"
+    "testLinux": "dotenv -e .env -- node --watch backend/server.js",
+    "start": "node backend/server.js"
   },
   "repository": {
     "type": "git",
