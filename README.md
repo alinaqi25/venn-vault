@@ -219,7 +219,7 @@ All API endpoints return JSON. Protected routes require a valid `token` cookie (
 |---|---|---|---|
 | `POST` | `/api/auth/register` | `{ name, email, password }` | Register a new user, create wallet, set auth cookie |
 | `POST` | `/api/auth/login` | `{ accountNumber, password }` | Authenticate and set auth cookie |
-| `GET` | `/api/auth/profile` | — | Return current user + wallet (requires cookie) |
+| `GET` | `/api/auth/profile` | Empty | Return current user + wallet (requires cookie) |
 
 ### Wallet
 
@@ -230,7 +230,7 @@ All wallet routes require a valid `token` cookie and will return `403` if the ac
 | `POST` | `/api/wallet/deposit` | `{ amount }` | Add funds to wallet |
 | `POST` | `/api/wallet/withdraw` | `{ amount }` | Deduct funds from wallet (balance floor: 0) |
 | `POST` | `/api/wallet/transfer` | `{ amount, recipient }` | Transfer to another user by email or Wallet ID |
-| `GET` | `/api/wallet/transactions` | — | Full transaction history for the authenticated user |
+| `GET` | `/api/wallet/transactions` | Empty | Full transaction history for the authenticated user |
 
 ### Admin
 
@@ -239,10 +239,10 @@ All admin routes require a valid `adminToken` cookie (set on admin login).
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
 | `POST` | `/api/admin/login` | `{ password }` | Authenticate as admin, set admin cookie |
-| `GET` | `/api/admin/users` | — | All non-admin users with wallet balances |
-| `GET` | `/api/admin/users/:id/transactions` | — | Transaction history for a specific user |
+| `GET` | `/api/admin/users` | Empty | All non-admin users with wallet balances |
+| `GET` | `/api/admin/users/:id/transactions` | Empty | Transaction history for a specific user |
 | `POST` | `/api/admin/users/:id/freeze` | `{ frozen: true/false }` | Freeze or unfreeze a user account |
-| `POST` | `/api/admin/users/:id/delete` | — | Soft delete a user account |
+| `POST` | `/api/admin/users/:id/delete` | Empty | Soft delete a user account |
 
 ---
 
