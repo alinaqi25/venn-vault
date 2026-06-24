@@ -1,6 +1,6 @@
 # Venn-Vault
 
-A full-stack online banking application built entirely with vanilla Node.js — no Express, no framework. Every HTTP concern: routing, body parsing, header management, static file serving, and cookie handling is implemented from scratch using Node's native `http` and `fs` modules.
+A full-stack online banking application built entirely with vanilla Node.js without Express or any framework. Every HTTP concern: routing, body parsing, header management, static file serving, and cookie handling is implemented from scratch using Node's native `http` and `fs` modules.
 
 The project is intentionally built this way. The goal was to understand what frameworks do by doing it without them.
 
@@ -51,7 +51,7 @@ venn-vault/
 
 ### HTTP Server & Router
 
-`server.js` creates a single Node `http` server. Every incoming request is handled inside one `async` callback. Routing is done by matching `request.url` and `request.method` directly — no router library, no middleware stack.
+`server.js` creates a single Node `http` server. Every incoming request is handled inside one `async` callback. Routing is done by matching `request.url` and `request.method` directly without any router library or middleware stack.
 
 ```
 GET  /                    → serves index.html
@@ -75,7 +75,7 @@ Static file serving is handled in the same server callback. Any `GET` request th
 
 ### Body Parsing
 
-Request bodies are read using Node's raw stream API — `request.on('data')` and `request.on('end')` — and parsed with `JSON.parse`. No `body-parser`, no `express.json()`.
+Request bodies are read using Node's raw stream API `request.on('data')` and `request.on('end')` and parsed with `JSON.parse`. No `body-parser`, no `express.json()`.
 
 ### Authentication
 
@@ -87,7 +87,7 @@ Admin sessions use a separate cookie (`adminToken`) with a 30-minute expiry. Adm
 
 All database interaction is in `db.js`, which exports named async functions. These wrap a `pg.Pool` with two internal helpers: `query` (returns all rows) and `queryOne` (returns first row or null). No ORM.
 
-Fund transfers use a dedicated `executeTransfer` function that acquires a client from the pool, runs `BEGIN`, locks both wallet rows with `SELECT ... FOR UPDATE`, validates the sender balance, applies both `UPDATE` statements, inserts the transaction record, and `COMMIT`s — or `ROLLBACK`s on any error. This ensures transfers are atomic.
+Fund transfers use a dedicated `executeTransfer` function that acquires a client from the pool, runs `BEGIN`, locks both wallet rows with `SELECT ... FOR UPDATE`, validates the sender balance, applies both `UPDATE` statements, inserts the transaction record, and `COMMIT`s or `ROLLBACK`s on any error. This ensures transfers are atomic.
 
 ---
 
@@ -105,7 +105,7 @@ Fund transfers use a dedicated `executeTransfer` function that acquires a client
 | `account_type` | `VARCHAR(10)` | `'user'` or `'admin'` |
 | `is_frozen` | `BOOLEAN` | Default `FALSE` |
 | `create_time` | `TIMESTAMPTZ` | Default `NOW()` |
-| `is_deleted` | `BOOLEAN` | Soft delete — preserves transaction history |
+| `is_deleted` | `BOOLEAN` | Soft delete preserves transaction history |
 
 ### `wallets`
 | Column | Type | Notes |
@@ -133,10 +133,10 @@ Indexes exist on `users.email` and `wallets.user_id`.
 
 - **Passwords** are hashed with `bcrypt` at a cost factor of 10 before being stored. Plaintext is never persisted and never logged.
 - **JWTs** are signed with a secret from `process.env.JWT_SECRET` and set as `HttpOnly` cookies, making them inaccessible to client-side JavaScript.
-- **Frozen accounts** are blocked at the API level on deposit, withdrawal, and transfer routes — not just in the UI.
+- **Frozen accounts** are blocked at the API level on deposit, withdrawal, and transfer routes.
 - **Soft deletes** mark accounts as `is_deleted = TRUE` rather than removing rows, so transaction history referencing deleted users is preserved.
 - **Transfer atomicity** is enforced with a PostgreSQL transaction and row-level locks (`FOR UPDATE`), preventing race conditions on concurrent balance updates.
-- **Admin and user sessions are separated** — a user `token` cookie cannot authenticate admin routes, and an `adminToken` cookie cannot authenticate user routes.
+- **Admin and user sessions are separated** User `token` cookie cannot authenticate admin routes, and an `adminToken` cookie cannot authenticate user routes.
 
 ---
 
@@ -175,7 +175,7 @@ For Railway or other hosted Postgres, use `DATABASE_URL` instead.
 
 ### Database Setup
 
-**Option A — Local Postgres:**
+**Option A: Local Postgres:**
 
 Connect to your database and run `backend/schema.sql` manually, or pipe it in:
 
@@ -183,7 +183,7 @@ Connect to your database and run `backend/schema.sql` manually, or pipe it in:
 psql -U your_user -d vennvault -f backend/schema.sql
 ```
 
-**Option B — Remote (Railway / hosted):**
+**Option B: Remote (Railway / hosted):**
 
 ```bash
 node backend/setup.js
@@ -197,7 +197,7 @@ This reads `backend/schema.sql` and executes it against `DATABASE_URL`.
 node backend/seedAdmin.js
 ```
 
-This creates the admin user with the email `admin@vennvault.internal` and the password from `process.env.ADMIN_PASSWORD`. The script is idempotent — running it again when the admin already exists does nothing.
+This creates the admin user with the email `admin@vennvault.internal` and the password from `process.env.ADMIN_PASSWORD`. The script is idempotent; running it again when the admin already exists does nothing.
 
 ### Start the Server
 
@@ -248,14 +248,14 @@ All admin routes require a valid `adminToken` cookie (set on admin login).
 
 ## Frontend
 
-The frontend is plain HTML, CSS, and JavaScript — no React, no bundler.
+The frontend is plain HTML, CSS, and JavaScript. No framework used.
 
 - **`login.js`** handles the login form, posts to `/api/auth/login`, and redirects to `/dashboard` on success.
 - **`register.js`** handles registration, posts to `/api/auth/register`, and redirects to `/dashboard` on success.
 - **`dashboard.js`** fetches the user profile on load, populates the balance card and account info, and manages slide-in panels for deposit, withdrawal, transfer, and transaction history. Balance is updated in-memory after every successful transaction without a full page reload.
 - **`admin.js`** handles admin login, then dynamically builds the admin panel UI, loads all users into a table, and handles freeze/unfreeze/delete actions and per-user transaction modals inline.
 
-The server itself serves all frontend files — there is no separate static file server or CDN involved.
+The server itself serves all frontend files. There is no separate static file server or CDN involved.
 
 ---
 
